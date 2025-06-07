@@ -7,3 +7,6 @@
 [submodule "user-service"]
 	path = user-service
 	url = https://github.com/kunalbarchha/user-service
+[submodule "database-module"]
+	path = database-module
+	url = https://github.com/kunalbarchha/database-module

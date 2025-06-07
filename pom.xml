@@ -10,6 +10,15 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
+    <modules>
+        <module>common-modules</module>
+        <module>eureka-service</module>
+        <module>gateway-service</module>
+        <module>user-service</module>
+        <module>database-module</module>
+        <module>database-module/mongo-module</module>
+    </modules>
+
     <groupId>com.phinity</groupId>
     <artifactId>phinity-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
