@@ -1,0 +1,5 @@
+Basic User Creation Flow: 
+
+user will register with email and password only. 
+On successfully registering, redirect the user to email verification screen with option to enter OTP. Show message "Please check your email for verification code."
+

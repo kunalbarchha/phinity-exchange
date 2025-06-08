@@ -16,7 +16,6 @@
         <module>gateway-service</module>
         <module>user-service</module>
         <module>database-module</module>
-        <module>database-module/mongo-module</module>
     </modules>
 
     <groupId>com.phinity</groupId>
@@ -40,6 +39,17 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>4.5.3</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
