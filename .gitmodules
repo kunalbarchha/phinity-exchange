@@ -10,3 +10,6 @@
 [submodule "database-module"]
 	path = database-module
 	url = https://github.com/kunalbarchha/database-module
+[submodule "kafka-module"]
+	path = kafka-module
+	url = https://github.com/kunalbarchha/kafka-module
