@@ -74,14 +74,26 @@ PUT /api/users/profile
 ### KYC Submission
 
 ```
-POST /api/users/kyc
+POST /users/kyc
 {
+  "fullName": "John Smith",
+  "dateOfBirth": "01012000",  // Format: ddMMyyyy
   "documentType": "PASSPORT",
-  "documentNumber": "AB123456",
-  "documentImage": "base64-encoded-image",
-  "selfieImage": "base64-encoded-image"
+  "documentNumber": "AB123456"
 }
+
+// With multipart file uploads
+frontImage: [binary file] (JPEG/PNG, max 1MB)
+backImage: [binary file] (JPEG/PNG, max 1MB)
+selfie: [binary file] (JPEG/PNG, max 1MB)
 ```
+
+**Validation Rules:**
+- All images must be JPEG or PNG format and under 1MB
+- Full name, date of birth, document type and number are required
+- Date of birth must be in ddMMyyyy format
+- User must be at least 18 years old
+- Date of birth cannot be in the future
 
 ## Integration Points
 

@@ -28,11 +28,12 @@
 - Mobile number verification
 - Identity verification:
   * Full name as per document
-  * Date of birth
+  * Date of birth (format: ddMMyyyy, must be 18+ years old)
   * Document type selection
   * Document number
-  * Front image upload
-  * Back image upload
+  * Front image upload (JPEG/PNG, max 1MB)
+  * Back image upload (JPEG/PNG, max 1MB)
+  * Selfie image upload (JPEG/PNG, max 1MB)
 
 ### Step 2: Advanced Level
 - Upload proof of address (must not be older than 30 days)
