@@ -17,6 +17,7 @@
         <module>user-service</module>
         <module>database-module</module>
         <module>kafka-module</module>
+        <module>market-service</module>
     </modules>
 
     <groupId>com.phinity</groupId>
