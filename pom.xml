@@ -19,6 +19,7 @@
         <module>kafka-module</module>
         <module>market-service</module>
         <module>admin-service</module>
+        <module>websocket-service</module>
     </modules>
 
     <groupId>com.phinity</groupId>

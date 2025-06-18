@@ -16,3 +16,6 @@
 [submodule "admin-service"]
 	path = admin-service
 	url = https://github.com/kunalbarchha/admin-service
+[submodule "websocket-service"]
+	path = websocket-service
+	url = https://github.com/kunalbarchha/websocket-service
