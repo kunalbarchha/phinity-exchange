@@ -13,3 +13,6 @@
 [submodule "kafka-module"]
 	path = kafka-module
 	url = https://github.com/kunalbarchha/kafka-module
+[submodule "admin-service"]
+	path = admin-service
+	url = https://github.com/kunalbarchha/admin-service
