@@ -19,3 +19,9 @@
 [submodule "websocket-service"]
 	path = websocket-service
 	url = https://github.com/kunalbarchha/websocket-service
+[submodule "order-service"]
+	path = order-service
+	url = https://github.com/kunalbarchha/order-service
+[submodule "matching-service"]
+	path = matching-service
+	url = https://github.com/kunalbarchha/matching-service

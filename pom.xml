@@ -20,6 +20,8 @@
         <module>market-service</module>
         <module>admin-service</module>
         <module>websocket-service</module>
+        <module>matching-service</module>
+        <module>matching-engine</module>
     </modules>
 
     <groupId>com.phinity</groupId>
