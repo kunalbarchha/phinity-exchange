@@ -12,5 +12,7 @@ public class ToDo {
     7. Registration validation -> Check if mobile already registered. Mobile number has to be unique for all users.
     8. Keep user KYCStatus PENDING as long as documents are not uploaded. When submitted, set INITIATED_BY_USER.
     9. Strict security for communication through Kafka
+    10. Maker and Taker fee are set whichever is highest by order-service. After execution actual status will be
+    identified by matching-service. In case of excess fee, refund the exceeding fee back to user.
      */
 }

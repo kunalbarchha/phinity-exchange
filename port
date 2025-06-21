@@ -1,0 +1,7 @@
+eureka - 8000
+gateway - 8001
+user - 8002
+market - 8003
+admin - 8004
+matching - 8005
+order - 8006
