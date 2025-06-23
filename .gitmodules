@@ -25,3 +25,6 @@
 [submodule "matching-service"]
 	path = matching-service
 	url = https://github.com/kunalbarchha/matching-service
+[submodule "tradingview-service"]
+	path = tradingview-service
+	url = https://github.com/kunalbarchha/tradingview-service

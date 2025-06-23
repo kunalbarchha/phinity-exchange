@@ -23,6 +23,7 @@
         <module>matching-service</module>
         <module>matching-engine</module>
         <module>order-service</module>
+        <module>tradingview-service</module>
     </modules>
 
     <groupId>com.phinity</groupId>
