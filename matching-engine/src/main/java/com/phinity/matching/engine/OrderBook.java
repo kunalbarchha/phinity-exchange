@@ -22,7 +22,8 @@ public class OrderBook {
             matchSellOrder(order, trades);
         }
         
-        if (!order.isFilled()) {
+        // Only add to book if it's a limit order and not fully filled
+        if (!order.isFilled() && order.getOrderType() != com.phinity.common.dto.enums.OrderType.MARKET) {
             addOrderToBook(order);
         }
         
@@ -32,7 +33,10 @@ public class OrderBook {
     private synchronized void matchBuyOrder(PendingOrders buyOrder, List<Trade> trades) {
         while (!buyOrder.isFilled() && !asks.isEmpty()) {
             Map.Entry<BigDecimal, Queue<PendingOrders>> bestAsk = asks.firstEntry();
-            if (buyOrder.getPrice().compareTo(bestAsk.getKey()) < 0) break;
+            
+            // For limit orders, check price constraint
+            if (buyOrder.getOrderType() == com.phinity.common.dto.enums.OrderType.LIMIT && 
+                buyOrder.getPrice().compareTo(bestAsk.getKey()) < 0) break;
             
             Queue<PendingOrders> orders = bestAsk.getValue();
             PendingOrders sellOrder = orders.peek();
@@ -68,7 +72,10 @@ public class OrderBook {
     private synchronized void matchSellOrder(PendingOrders sellOrder, List<Trade> trades) {
         while (!sellOrder.isFilled() && !bids.isEmpty()) {
             Map.Entry<BigDecimal, Queue<PendingOrders>> bestBid = bids.firstEntry();
-            if (sellOrder.getPrice().compareTo(bestBid.getKey()) > 0) break;
+            
+            // For limit orders, check price constraint
+            if (sellOrder.getOrderType() == com.phinity.common.dto.enums.OrderType.LIMIT && 
+                sellOrder.getPrice().compareTo(bestBid.getKey()) > 0) break;
             
             Queue<PendingOrders> orders = bestBid.getValue();
             PendingOrders buyOrder = orders.peek();

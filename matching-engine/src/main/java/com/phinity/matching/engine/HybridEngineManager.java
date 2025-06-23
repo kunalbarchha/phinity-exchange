@@ -21,16 +21,24 @@ public class HybridEngineManager {
     }
 
     public CompletableFuture<List<Trade>> processOrder(String orderId, String symbol,
-                                                       Side side, BigDecimal price, BigDecimal quantity) {
+                                                       Side side, BigDecimal price, BigDecimal quantity, 
+                                                       com.phinity.common.dto.enums.OrderType orderType) {
         if (configManager.isHighVolumePair(symbol)) {
             // Use Disruptor for high-volume pairs
             OptimizedDisruptorEngine engine = disruptorEngines.computeIfAbsent(symbol, OptimizedDisruptorEngine::new);
-            return CompletableFuture.completedFuture(engine.processOrderSync(orderId, symbol, side, price, quantity));
+            return CompletableFuture.completedFuture(engine.processOrderSync(orderId, symbol, side, price, quantity, orderType));
         } else {
             // Use standard engine for regular pairs
             PendingOrders order = new PendingOrders(orderId, symbol, side, price, quantity);
+            order.setOrderType(orderType);
             return standardManager.processOrder(order);
         }
+    }
+    
+    // Backward compatibility method
+    public CompletableFuture<List<Trade>> processOrder(String orderId, String symbol,
+                                                       Side side, BigDecimal price, BigDecimal quantity) {
+        return processOrder(orderId, symbol, side, price, quantity, com.phinity.common.dto.enums.OrderType.LIMIT);
     }
 
     public void configureHighVolumePair(String symbol, boolean isHighVolume) {

@@ -11,22 +11,32 @@ public class OrderEvent {
     private Side side;
     private BigDecimal price;
     private BigDecimal quantity;
+    private com.phinity.common.dto.enums.OrderType orderType;
     private volatile boolean processed = false;
     private volatile Trade[] trades;
     private volatile int tradeCount;
 
-    public void set(String orderId, String symbol, Side side, BigDecimal price, BigDecimal quantity) {
+    public void set(String orderId, String symbol, Side side, BigDecimal price, BigDecimal quantity, 
+                    com.phinity.common.dto.enums.OrderType orderType) {
         this.orderId = orderId;
         this.symbol = symbol;
         this.side = side;
         this.price = price;
         this.quantity = quantity;
+        this.orderType = orderType;
         this.processed = false;
         this.tradeCount = 0;
     }
+    
+    // Backward compatibility method
+    public void set(String orderId, String symbol, Side side, BigDecimal price, BigDecimal quantity) {
+        set(orderId, symbol, side, price, quantity, com.phinity.common.dto.enums.OrderType.LIMIT);
+    }
 
     public PendingOrders toOrder() {
-        return new PendingOrders(orderId, symbol, side, price, quantity);
+        PendingOrders order = new PendingOrders(orderId, symbol, side, price, quantity);
+        order.setOrderType(orderType);
+        return order;
     }
 
     public void setResult(Trade[] trades, int count) {

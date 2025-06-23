@@ -44,11 +44,12 @@ public class OptimizedDisruptorEngine {
     }
 
     public List<Trade> processOrderSync(String orderId, String symbol,
-                                        Side side, BigDecimal price, BigDecimal quantity) {
+                                        Side side, BigDecimal price, BigDecimal quantity, 
+                                        com.phinity.common.dto.enums.OrderType orderType) {
         long sequence = ringBuffer.next();
         try {
             OrderEvent event = ringBuffer.get(sequence);
-            event.set(orderId, symbol, side, price, quantity);
+            event.set(orderId, symbol, side, price, quantity, orderType);
             
             ringBuffer.publish(sequence);
             
@@ -64,6 +65,12 @@ public class OptimizedDisruptorEngine {
             ringBuffer.publish(sequence);
             return List.of();
         }
+    }
+    
+    // Backward compatibility method
+    public List<Trade> processOrderSync(String orderId, String symbol,
+                                        Side side, BigDecimal price, BigDecimal quantity) {
+        return processOrderSync(orderId, symbol, side, price, quantity, com.phinity.common.dto.enums.OrderType.LIMIT);
     }
 
     private void handleOrderEvent(OrderEvent event, long sequence, boolean endOfBatch) {
