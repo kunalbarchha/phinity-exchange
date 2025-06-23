@@ -88,6 +88,10 @@ public class OptimizedDisruptorEngine {
         }
     }
 
+    public void setEventPublisher(EventPublisher eventPublisher) {
+        this.orderBook.setEventPublisher(eventPublisher);
+    }
+    
     public String getSymbol() { return symbol; }
     public long getProcessedOrdersCount() { return processedOrders.get(); }
     public void shutdown() { disruptor.shutdown(); }

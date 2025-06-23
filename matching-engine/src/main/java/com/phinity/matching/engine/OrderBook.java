@@ -12,7 +12,12 @@ public class OrderBook {
     private final ConcurrentSkipListMap<BigDecimal, Queue<PendingOrders>> bids = new ConcurrentSkipListMap<>(Collections.reverseOrder());
     private final ConcurrentSkipListMap<BigDecimal, Queue<PendingOrders>> asks = new ConcurrentSkipListMap<>();
     private final AtomicLong tradeIdCounter = new AtomicLong(0);
+    private EventPublisher eventPublisher;
 
+    public void setEventPublisher(EventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
+    
     public List<Trade> matchOrder(PendingOrders order) {
         List<Trade> trades = new ArrayList<>();
         
@@ -25,6 +30,14 @@ public class OrderBook {
         // Only add to book if it's a limit order and not fully filled
         if (!order.isFilled() && order.getOrderType() != com.phinity.common.dto.enums.OrderType.MARKET) {
             addOrderToBook(order);
+        }
+        
+        // Publish events if there are trades or orderbook changed
+        if (eventPublisher != null) {
+            if (!trades.isEmpty()) {
+                eventPublisher.publishTradeExecution(order.getSymbol(), trades);
+            }
+            eventPublisher.publishOrderBookUpdate(order.getSymbol(), this);
         }
         
         return trades;
@@ -113,5 +126,17 @@ public class OrderBook {
             order.getSide() == Side.BUY ? bids : asks;
         
         book.computeIfAbsent(order.getPrice(), k -> new LinkedList<>()).offer(order);
+    }
+    
+    public List<PendingOrders> getBids() {
+        return bids.values().stream()
+            .flatMap(Queue::stream)
+            .toList();
+    }
+    
+    public List<PendingOrders> getAsks() {
+        return asks.values().stream()
+            .flatMap(Queue::stream)
+            .toList();
     }
 }

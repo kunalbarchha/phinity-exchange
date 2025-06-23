@@ -9,6 +9,7 @@ public class EnginePool {
     private final Map<String, MatchingEngine> engines = new ConcurrentHashMap<>();
     private final ExecutorService executorService;
     private final Set<String> highVolumePairs;
+    private EventPublisher eventPublisher;
     
     public EnginePool(int poolSize, Set<String> highVolumePairs) {
         this.executorService = Executors.newFixedThreadPool(poolSize);
@@ -22,8 +23,17 @@ public class EnginePool {
         }, executorService);
     }
 
+    public void setEventPublisher(EventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+        engines.values().forEach(engine -> engine.setEventPublisher(eventPublisher));
+    }
+    
     private MatchingEngine getOrCreateEngine(String symbol) {
-        return engines.computeIfAbsent(symbol, MatchingEngine::new);
+        MatchingEngine engine = engines.computeIfAbsent(symbol, MatchingEngine::new);
+        if (eventPublisher != null) {
+            engine.setEventPublisher(eventPublisher);
+        }
+        return engine;
     }
 
     public Set<String> getActivePairs() {

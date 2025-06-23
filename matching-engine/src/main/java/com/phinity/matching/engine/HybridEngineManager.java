@@ -13,11 +13,18 @@ public class HybridEngineManager {
     private final EngineManager standardManager;
     private final ConcurrentHashMap<String, OptimizedDisruptorEngine> disruptorEngines;
     private final PairConfigurationManager configManager;
+    private EventPublisher eventPublisher;
 
     public HybridEngineManager() {
         this.standardManager = new EngineManager();
         this.disruptorEngines = new ConcurrentHashMap<>();
         this.configManager = new PairConfigurationManager();
+    }
+    
+    public void setEventPublisher(EventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+        this.standardManager.setEventPublisher(eventPublisher);
+        this.disruptorEngines.values().forEach(engine -> engine.setEventPublisher(eventPublisher));
     }
 
     public CompletableFuture<List<Trade>> processOrder(String orderId, String symbol,
@@ -45,7 +52,10 @@ public class HybridEngineManager {
         if (isHighVolume) {
             configManager.addHighVolumePair(symbol);
             // Pre-create Disruptor engine
-            disruptorEngines.computeIfAbsent(symbol, OptimizedDisruptorEngine::new);
+            OptimizedDisruptorEngine engine = disruptorEngines.computeIfAbsent(symbol, OptimizedDisruptorEngine::new);
+            if (eventPublisher != null) {
+                engine.setEventPublisher(eventPublisher);
+            }
         } else {
             configManager.removeHighVolumePair(symbol);
             // Shutdown and remove Disruptor engine

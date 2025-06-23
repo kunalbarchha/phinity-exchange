@@ -14,6 +14,10 @@ public class MatchingEngine {
         this.symbol = symbol;
         this.orderBook = new OrderBook();
     }
+    
+    public void setEventPublisher(EventPublisher eventPublisher) {
+        this.orderBook.setEventPublisher(eventPublisher);
+    }
 
     public List<Trade> match(PendingOrders order) {
         processedOrders.incrementAndGet();

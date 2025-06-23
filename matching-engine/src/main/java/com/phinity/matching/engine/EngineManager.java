@@ -9,11 +9,18 @@ public class EngineManager {
     private final EnginePool highVolumePool;
     private final EnginePool standardPool;
     private final PairConfigurationManager configManager;
+    private EventPublisher eventPublisher;
     
     public EngineManager() {
         this.configManager = new PairConfigurationManager();
         this.highVolumePool = new EnginePool(50, Collections.emptySet());
         this.standardPool = new EnginePool(100, Collections.emptySet());
+    }
+    
+    public void setEventPublisher(EventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+        this.highVolumePool.setEventPublisher(eventPublisher);
+        this.standardPool.setEventPublisher(eventPublisher);
     }
 
     public CompletableFuture<List<Trade>> processOrder(PendingOrders order) {
