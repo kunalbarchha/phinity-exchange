@@ -14,6 +14,7 @@ public class HybridEngineManager {
     private final ConcurrentHashMap<String, OptimizedDisruptorEngine> disruptorEngines;
     private final PairConfigurationManager configManager;
     private EventPublisher eventPublisher;
+    private EventStore eventStore;
 
     public HybridEngineManager() {
         this.standardManager = new EngineManager();
@@ -26,19 +27,41 @@ public class HybridEngineManager {
         this.standardManager.setEventPublisher(eventPublisher);
         this.disruptorEngines.values().forEach(engine -> engine.setEventPublisher(eventPublisher));
     }
+    
+    public void setEventStore(EventStore eventStore) {
+        this.eventStore = eventStore;
+        this.standardManager.setEventStore(eventStore);
+        this.disruptorEngines.values().forEach(engine -> engine.setEventStore(eventStore));
+    }
 
     public CompletableFuture<List<Trade>> processOrder(String orderId, String symbol,
                                                        Side side, BigDecimal price, BigDecimal quantity, 
                                                        com.phinity.common.dto.enums.OrderType orderType) {
+        long startTime = System.nanoTime();
+        
         if (configManager.isHighVolumePair(symbol)) {
             // Use Disruptor for high-volume pairs
+            MetricsCollector.getInstance().recordEngineUsage("disruptor");
             OptimizedDisruptorEngine engine = disruptorEngines.computeIfAbsent(symbol, OptimizedDisruptorEngine::new);
-            return CompletableFuture.completedFuture(engine.processOrderSync(orderId, symbol, side, price, quantity, orderType));
+            List<Trade> trades = engine.processOrderSync(orderId, symbol, side, price, quantity, orderType);
+            
+            long processingTime = System.nanoTime() - startTime;
+            MetricsCollector.getInstance().recordOrderProcessed(symbol, processingTime);
+            trades.forEach(trade -> MetricsCollector.getInstance().recordTradeExecuted(symbol, trade.getQuantity()));
+            
+            return CompletableFuture.completedFuture(trades);
         } else {
             // Use standard engine for regular pairs
+            MetricsCollector.getInstance().recordEngineUsage("standard");
             PendingOrders order = new PendingOrders(orderId, symbol, side, price, quantity);
             order.setOrderType(orderType);
-            return standardManager.processOrder(order);
+            
+            return standardManager.processOrder(order).thenApply(trades -> {
+                long processingTime = System.nanoTime() - startTime;
+                MetricsCollector.getInstance().recordOrderProcessed(symbol, processingTime);
+                trades.forEach(trade -> MetricsCollector.getInstance().recordTradeExecuted(symbol, trade.getQuantity()));
+                return trades;
+            });
         }
     }
     

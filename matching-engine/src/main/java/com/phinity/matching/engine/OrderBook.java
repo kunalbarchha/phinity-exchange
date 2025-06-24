@@ -1,6 +1,7 @@
 package com.phinity.matching.engine;
 
 import com.phinity.common.dto.enums.Side;
+import com.phinity.common.dto.enums.TimeInForce;
 import com.phinity.common.dto.models.PendingOrders;
 
 import java.math.BigDecimal;
@@ -20,6 +21,13 @@ public class OrderBook {
     
     public List<Trade> matchOrder(PendingOrders order) {
         List<Trade> trades = new ArrayList<>();
+        TimeInForce timeInForce = getTimeInForce(order);
+        
+        // For FOK, check if order can be completely filled first
+        if (timeInForce == TimeInForce.FOK && !canFillCompletely(order)) {
+            MetricsCollector.getInstance().recordRejectedOrder();
+            return trades; // Return empty trades - order rejected
+        }
         
         if (order.getSide() == Side.BUY) {
             matchBuyOrder(order, trades);
@@ -27,8 +35,12 @@ public class OrderBook {
             matchSellOrder(order, trades);
         }
         
-        // Only add to book if it's a limit order and not fully filled
-        if (!order.isFilled() && order.getOrderType() != com.phinity.common.dto.enums.OrderType.MARKET) {
+        // Handle Time-in-Force logic
+        boolean shouldAddToBook = !order.isFilled() && 
+                                 order.getOrderType() != com.phinity.common.dto.enums.OrderType.MARKET &&
+                                 timeInForce == TimeInForce.GTC;
+        
+        if (shouldAddToBook) {
             addOrderToBook(order);
         }
         
@@ -138,5 +150,40 @@ public class OrderBook {
         return asks.values().stream()
             .flatMap(Queue::stream)
             .toList();
+    }
+    
+    private TimeInForce getTimeInForce(PendingOrders order) {
+        // Default to GTC if not specified
+        return order.getTimeInForce() != null ? order.getTimeInForce() : TimeInForce.GTC;
+    }
+    
+    private boolean canFillCompletely(PendingOrders order) {
+        BigDecimal availableQuantity = BigDecimal.ZERO;
+        
+        if (order.getSide() == Side.BUY) {
+            for (Map.Entry<BigDecimal, Queue<PendingOrders>> entry : asks.entrySet()) {
+                if (order.getPrice().compareTo(entry.getKey()) < 0) break;
+                
+                for (PendingOrders sellOrder : entry.getValue()) {
+                    availableQuantity = availableQuantity.add(sellOrder.getRemainingQuantity());
+                    if (availableQuantity.compareTo(order.getRemainingQuantity()) >= 0) {
+                        return true;
+                    }
+                }
+            }
+        } else {
+            for (Map.Entry<BigDecimal, Queue<PendingOrders>> entry : bids.entrySet()) {
+                if (order.getPrice().compareTo(entry.getKey()) > 0) break;
+                
+                for (PendingOrders buyOrder : entry.getValue()) {
+                    availableQuantity = availableQuantity.add(buyOrder.getRemainingQuantity());
+                    if (availableQuantity.compareTo(order.getRemainingQuantity()) >= 0) {
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        return false;
     }
 }
