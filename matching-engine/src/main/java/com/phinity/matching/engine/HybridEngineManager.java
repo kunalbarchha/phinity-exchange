@@ -97,6 +97,15 @@ public class HybridEngineManager {
         allPairs.addAll(disruptorEngines.keySet());
         return allPairs;
     }
+    
+    public Book getOrderBook(String symbol) {
+        if (configManager.isHighVolumePair(symbol)) {
+            OptimizedDisruptorEngine engine = disruptorEngines.get(symbol);
+            return engine != null ? engine.getOrderBook() : null;
+        } else {
+            return standardManager.getOrderBook(symbol);
+        }
+    }
 
     public void shutdown() {
         standardManager.shutdown();

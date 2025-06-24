@@ -28,6 +28,10 @@ public class EnginePool {
         engines.values().forEach(engine -> engine.setEventPublisher(eventPublisher));
     }
     
+    public void setEventStore(EventStore eventStore) {
+        engines.values().forEach(engine -> engine.setEventStore(eventStore));
+    }
+    
     private MatchingEngine getOrCreateEngine(String symbol) {
         MatchingEngine engine = engines.computeIfAbsent(symbol, MatchingEngine::new);
         if (eventPublisher != null) {

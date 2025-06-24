@@ -9,14 +9,19 @@ import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class OrderBook {
+public class Book {
     private final ConcurrentSkipListMap<BigDecimal, Queue<PendingOrders>> bids = new ConcurrentSkipListMap<>(Collections.reverseOrder());
     private final ConcurrentSkipListMap<BigDecimal, Queue<PendingOrders>> asks = new ConcurrentSkipListMap<>();
     private final AtomicLong tradeIdCounter = new AtomicLong(0);
     private EventPublisher eventPublisher;
+    private EventStore eventStore;
 
     public void setEventPublisher(EventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
+    }
+    
+    public void setEventStore(EventStore eventStore) {
+        this.eventStore = eventStore;
     }
     
     public List<Trade> matchOrder(PendingOrders order) {

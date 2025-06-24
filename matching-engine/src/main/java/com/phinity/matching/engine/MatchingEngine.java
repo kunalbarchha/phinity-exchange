@@ -7,21 +7,25 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class MatchingEngine {
     private final String symbol;
-    private final OrderBook orderBook;
+    private final Book book;
     private final AtomicLong processedOrders = new AtomicLong(0);
 
     public MatchingEngine(String symbol) {
         this.symbol = symbol;
-        this.orderBook = new OrderBook();
+        this.book = new Book();
     }
     
     public void setEventPublisher(EventPublisher eventPublisher) {
-        this.orderBook.setEventPublisher(eventPublisher);
+        this.book.setEventPublisher(eventPublisher);
+    }
+    
+    public void setEventStore(EventStore eventStore) {
+        this.book.setEventStore(eventStore);
     }
 
     public List<Trade> match(PendingOrders order) {
         processedOrders.incrementAndGet();
-        return orderBook.matchOrder(order);
+        return book.matchOrder(order);
     }
 
     public String getSymbol() {
@@ -30,5 +34,9 @@ public class MatchingEngine {
 
     public long getProcessedOrdersCount() {
         return processedOrders.get();
+    }
+
+    public Book getOrderBook(){
+        return book;
     }
 }

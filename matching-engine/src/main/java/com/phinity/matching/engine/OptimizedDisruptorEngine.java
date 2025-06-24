@@ -8,7 +8,6 @@ import com.phinity.common.dto.models.PendingOrders;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -16,12 +15,12 @@ public class OptimizedDisruptorEngine {
     private final String symbol;
     private final Disruptor<OrderEvent> disruptor;
     private final RingBuffer<OrderEvent> ringBuffer;
-    private final OrderBook orderBook;
+    private final Book book;
     private final AtomicLong processedOrders = new AtomicLong(0);
 
     public OptimizedDisruptorEngine(String symbol) {
         this.symbol = symbol;
-        this.orderBook = new OrderBook();
+        this.book = new Book();
         
         ThreadFactory threadFactory = r -> {
             Thread t = new Thread(r, "OptimizedEngine-" + symbol);
@@ -76,7 +75,7 @@ public class OptimizedDisruptorEngine {
     private void handleOrderEvent(OrderEvent event, long sequence, boolean endOfBatch) {
         try {
             PendingOrders order = event.toOrder();
-            List<Trade> trades = orderBook.matchOrder(order);
+            List<Trade> trades = book.matchOrder(order);
             
             Trade[] tradeArray = trades.toArray(new Trade[0]);
             event.setResult(tradeArray, trades.size());
@@ -89,10 +88,15 @@ public class OptimizedDisruptorEngine {
     }
 
     public void setEventPublisher(EventPublisher eventPublisher) {
-        this.orderBook.setEventPublisher(eventPublisher);
+        this.book.setEventPublisher(eventPublisher);
+    }
+    
+    public void setEventStore(EventStore eventStore) {
+        this.book.setEventStore(eventStore);
     }
     
     public String getSymbol() { return symbol; }
     public long getProcessedOrdersCount() { return processedOrders.get(); }
+    public Book getOrderBook() { return book; }
     public void shutdown() { disruptor.shutdown(); }
 }

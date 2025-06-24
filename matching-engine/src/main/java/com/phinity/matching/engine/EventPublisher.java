@@ -31,12 +31,12 @@ public class EventPublisher {
         kafkaProducer.send(KafkaTopic.TRADE_EXECUTED, symbol, event);
     }
     
-    public void publishOrderBookUpdate(String symbol, OrderBook orderBook) {
-        List<OrderBookUpdateEvent.OrderLevel> bids = orderBook.getBids().stream()
+    public void publishOrderBookUpdate(String symbol, Book book) {
+        List<OrderBookUpdateEvent.OrderLevel> bids = book.getBids().stream()
             .map(order -> new OrderBookUpdateEvent.OrderLevel(order.getPrice(), order.getQuantity()))
             .toList();
             
-        List<OrderBookUpdateEvent.OrderLevel> asks = orderBook.getAsks().stream()
+        List<OrderBookUpdateEvent.OrderLevel> asks = book.getAsks().stream()
             .map(order -> new OrderBookUpdateEvent.OrderLevel(order.getPrice(), order.getQuantity()))
             .toList();
             

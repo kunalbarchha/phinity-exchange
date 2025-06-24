@@ -53,6 +53,16 @@ public class EngineManager {
             return standardPool.getEngine(symbol);
         }
     }
+    
+    public Book getOrderBook(String symbol) {
+        MatchingEngine engine = getEngine(symbol);
+        return engine != null ? engine.getOrderBook() : null;
+    }
+    
+    public void setEventStore(EventStore eventStore) {
+        this.highVolumePool.setEventStore(eventStore);
+        this.standardPool.setEventStore(eventStore);
+    }
 
     public void shutdown() {
         highVolumePool.shutdown();
