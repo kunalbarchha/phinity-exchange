@@ -1,4 +1,4 @@
-package com.phinity.matching.engine;
+package com.phinity.matching.engine.service;
 
 import com.phinity.matching.engine.events.OrderEvent;
 import com.phinity.kafka.producer.KafkaMessageProducer;

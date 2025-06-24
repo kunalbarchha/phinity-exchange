@@ -1,6 +1,10 @@
 package com.phinity.matching.engine;
 
 import com.phinity.common.dto.models.PendingOrders;
+import com.phinity.matching.engine.core.MatchingEngine;
+import com.phinity.matching.engine.core.Trade;
+import com.phinity.matching.engine.service.EventPublisher;
+import com.phinity.matching.engine.service.EventStore;
 
 import java.util.*;
 import java.util.concurrent.*;

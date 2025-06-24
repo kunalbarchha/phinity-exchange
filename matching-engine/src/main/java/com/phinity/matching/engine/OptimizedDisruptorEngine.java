@@ -5,6 +5,10 @@ import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 import com.phinity.common.dto.enums.Side;
 import com.phinity.common.dto.models.PendingOrders;
+import com.phinity.matching.engine.core.OrderBook;
+import com.phinity.matching.engine.core.Trade;
+import com.phinity.matching.engine.service.EventPublisher;
+import com.phinity.matching.engine.service.EventStore;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -15,12 +19,12 @@ public class OptimizedDisruptorEngine {
     private final String symbol;
     private final Disruptor<OrderEvent> disruptor;
     private final RingBuffer<OrderEvent> ringBuffer;
-    private final Book book;
+    private final OrderBook book;
     private final AtomicLong processedOrders = new AtomicLong(0);
 
     public OptimizedDisruptorEngine(String symbol) {
         this.symbol = symbol;
-        this.book = new Book();
+        this.book = new OrderBook();
         
         ThreadFactory threadFactory = r -> {
             Thread t = new Thread(r, "OptimizedEngine-" + symbol);
@@ -43,7 +47,7 @@ public class OptimizedDisruptorEngine {
     }
 
     public List<Trade> processOrderSync(String orderId, String symbol,
-                                        Side side, BigDecimal price, BigDecimal quantity, 
+                                        Side side, BigDecimal price, BigDecimal quantity,
                                         com.phinity.common.dto.enums.OrderType orderType) {
         long sequence = ringBuffer.next();
         try {
@@ -97,6 +101,6 @@ public class OptimizedDisruptorEngine {
     
     public String getSymbol() { return symbol; }
     public long getProcessedOrdersCount() { return processedOrders.get(); }
-    public Book getOrderBook() { return book; }
+    public OrderBook getOrderBook() { return book; }
     public void shutdown() { disruptor.shutdown(); }
 }

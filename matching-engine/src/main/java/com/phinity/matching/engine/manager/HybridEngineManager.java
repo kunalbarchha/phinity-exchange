@@ -1,7 +1,15 @@
-package com.phinity.matching.engine;
+package com.phinity.matching.engine.manager;
 
 import com.phinity.common.dto.enums.Side;
 import com.phinity.common.dto.models.PendingOrders;
+import com.phinity.matching.engine.EngineManager;
+import com.phinity.matching.engine.OptimizedDisruptorEngine;
+import com.phinity.matching.engine.config.PairConfigurationManager;
+import com.phinity.matching.engine.core.OrderBook;
+import com.phinity.matching.engine.core.Trade;
+import com.phinity.matching.engine.metrics.MetricsCollector;
+import com.phinity.matching.engine.service.EventPublisher;
+import com.phinity.matching.engine.service.EventStore;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -98,7 +106,7 @@ public class HybridEngineManager {
         return allPairs;
     }
     
-    public Book getOrderBook(String symbol) {
+    public OrderBook getOrderBook(String symbol) {
         if (configManager.isHighVolumePair(symbol)) {
             OptimizedDisruptorEngine engine = disruptorEngines.get(symbol);
             return engine != null ? engine.getOrderBook() : null;

@@ -2,6 +2,7 @@ package com.phinity.matching.engine;
 
 import com.phinity.common.dto.enums.Side;
 import com.phinity.common.dto.models.PendingOrders;
+import com.phinity.matching.engine.core.Trade;
 
 import java.math.BigDecimal;
 

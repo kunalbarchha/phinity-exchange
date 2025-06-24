@@ -1,9 +1,11 @@
-package com.phinity.matching.engine;
+package com.phinity.matching.engine.service;
 
 import com.phinity.common.dto.constants.KafkaTopic;
 import com.phinity.common.dto.models.OrderBookUpdateEvent;
 import com.phinity.common.dto.models.TradeExecutionEvent;
 import com.phinity.kafka.producer.KafkaMessageProducer;
+import com.phinity.matching.engine.core.OrderBook;
+import com.phinity.matching.engine.core.Trade;
 
 import java.util.List;
 
@@ -31,12 +33,12 @@ public class EventPublisher {
         kafkaProducer.send(KafkaTopic.TRADE_EXECUTED, symbol, event);
     }
     
-    public void publishOrderBookUpdate(String symbol, Book book) {
-        List<OrderBookUpdateEvent.OrderLevel> bids = book.getBids().stream()
+    public void publishOrderBookUpdate(String symbol, OrderBook orderBook) {
+        List<OrderBookUpdateEvent.OrderLevel> bids = orderBook.getBids().stream()
             .map(order -> new OrderBookUpdateEvent.OrderLevel(order.getPrice(), order.getQuantity()))
             .toList();
             
-        List<OrderBookUpdateEvent.OrderLevel> asks = book.getAsks().stream()
+        List<OrderBookUpdateEvent.OrderLevel> asks = orderBook.getAsks().stream()
             .map(order -> new OrderBookUpdateEvent.OrderLevel(order.getPrice(), order.getQuantity()))
             .toList();
             

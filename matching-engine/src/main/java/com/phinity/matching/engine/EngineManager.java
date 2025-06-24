@@ -1,6 +1,12 @@
 package com.phinity.matching.engine;
 
 import com.phinity.common.dto.models.PendingOrders;
+import com.phinity.matching.engine.config.PairConfigurationManager;
+import com.phinity.matching.engine.core.MatchingEngine;
+import com.phinity.matching.engine.core.OrderBook;
+import com.phinity.matching.engine.core.Trade;
+import com.phinity.matching.engine.service.EventPublisher;
+import com.phinity.matching.engine.service.EventStore;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -54,7 +60,7 @@ public class EngineManager {
         }
     }
     
-    public Book getOrderBook(String symbol) {
+    public OrderBook getOrderBook(String symbol) {
         MatchingEngine engine = getEngine(symbol);
         return engine != null ? engine.getOrderBook() : null;
     }

@@ -1,15 +1,18 @@
-package com.phinity.matching.engine;
+package com.phinity.matching.engine.core;
 
 import com.phinity.common.dto.enums.Side;
 import com.phinity.common.dto.enums.TimeInForce;
 import com.phinity.common.dto.models.PendingOrders;
+import com.phinity.matching.engine.service.EventPublisher;
+import com.phinity.matching.engine.service.EventStore;
+import com.phinity.matching.engine.metrics.MetricsCollector;
 
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Book {
+public class OrderBook {
     private final ConcurrentSkipListMap<BigDecimal, Queue<PendingOrders>> bids = new ConcurrentSkipListMap<>(Collections.reverseOrder());
     private final ConcurrentSkipListMap<BigDecimal, Queue<PendingOrders>> asks = new ConcurrentSkipListMap<>();
     private final AtomicLong tradeIdCounter = new AtomicLong(0);
