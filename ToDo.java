@@ -15,6 +15,6 @@ public class ToDo {
     10. Maker and Taker fee are set whichever is highest by order-service. After execution actual status will be
     identified by matching-service. In case of excess fee, refund the exceeding fee back to user.
     11. Create Document of all ENV variables in sections for each service.
-    12.
+    12. Compile JAR Snapshot versioning should be dynamic instead of hardcoded 1.0
      */
 }
