@@ -28,3 +28,6 @@
 [submodule "tradingview-service"]
 	path = tradingview-service
 	url = https://github.com/kunalbarchha/tradingview-service
+[submodule "wallet-service"]
+	path = wallet-service
+	url = https://github.com/kunalbarchha/wallet-service
