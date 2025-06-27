@@ -20,13 +20,18 @@ public class EventPublisher {
         if (trades.isEmpty()) return;
         
         List<TradeExecutionEvent.TradeInfo> tradeInfos = trades.stream()
-            .map(trade -> new TradeExecutionEvent.TradeInfo(
-                trade.getTradeId(),
-                trade.getBuyOrderId(),
-                trade.getSellOrderId(),
-                trade.getPrice(),
-                trade.getQuantity()
-            ))
+            .map(trade -> {
+                TradeExecutionEvent.TradeInfo tradeInfo = new TradeExecutionEvent.TradeInfo(
+                    trade.getTradeId(),
+                    trade.getBuyOrderId(),
+                    trade.getSellOrderId(),
+                    trade.getPrice(),
+                    trade.getQuantity()
+                );
+                tradeInfo.setMakerOrderId(trade.getMakerOrderId());
+                tradeInfo.setTakerOrderId(trade.getTakerOrderId());
+                return tradeInfo;
+            })
             .toList();
             
         TradeExecutionEvent event = new TradeExecutionEvent(symbol, tradeInfos);
