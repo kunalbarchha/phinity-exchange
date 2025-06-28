@@ -17,5 +17,6 @@ public class ToDo {
     11. Create Document of all ENV variables in sections for each service.
     12. Compile JAR Snapshot versioning should be dynamic instead of hardcoded 1.0
     13. All services using kafka should have org.apache.kafka.* logging level to not mess up the logs with kafka messages
+    14. Thoroughly review the trading fee calculation in order-service, matching-engine.
      */
 }
