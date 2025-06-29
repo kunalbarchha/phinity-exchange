@@ -44,44 +44,13 @@ public class EventPublisher {
     }
     
     public void publishOrderBookUpdate(String symbol, OrderBook orderBook) {
-        // Aggregate bids by price level (highest price first)
+        // Send raw orderbook data - let websocket-service handle aggregation
         List<OrderBookUpdateEvent.OrderLevel> bids = orderBook.getBids().stream()
-            .collect(Collectors.groupingBy(
-                PendingOrders::getPrice,
-                LinkedHashMap::new,
-                Collectors.toList()
-            ))
-            .entrySet().stream()
-            .sorted(Map.Entry.<BigDecimal, List<PendingOrders>>comparingByKey().reversed())
-            .limit(10)
-            .map(entry -> {
-                BigDecimal price = entry.getKey();
-                List<PendingOrders> orders = entry.getValue();
-                BigDecimal totalQuantity = orders.stream()
-                    .map(PendingOrders::getRemainingQuantity)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-                return new OrderBookUpdateEvent.OrderLevel(price, totalQuantity, orders.size());
-            })
+            .map(order -> new OrderBookUpdateEvent.OrderLevel(order.getPrice(), order.getRemainingQuantity()))
             .toList();
             
-        // Aggregate asks by price level (lowest price first)
         List<OrderBookUpdateEvent.OrderLevel> asks = orderBook.getAsks().stream()
-            .collect(Collectors.groupingBy(
-                PendingOrders::getPrice,
-                LinkedHashMap::new,
-                Collectors.toList()
-            ))
-            .entrySet().stream()
-            .sorted(Map.Entry.<BigDecimal, List<PendingOrders>>comparingByKey())
-            .limit(10)
-            .map(entry -> {
-                BigDecimal price = entry.getKey();
-                List<PendingOrders> orders = entry.getValue();
-                BigDecimal totalQuantity = orders.stream()
-                    .map(PendingOrders::getRemainingQuantity)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-                return new OrderBookUpdateEvent.OrderLevel(price, totalQuantity, orders.size());
-            })
+            .map(order -> new OrderBookUpdateEvent.OrderLevel(order.getPrice(), order.getRemainingQuantity()))
             .toList();
             
         OrderBookUpdateEvent event = new OrderBookUpdateEvent(symbol, bids, asks);
