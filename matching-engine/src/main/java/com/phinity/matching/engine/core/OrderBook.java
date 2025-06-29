@@ -31,6 +31,9 @@ public class OrderBook {
         List<Trade> trades = new ArrayList<>();
         TimeInForce timeInForce = getTimeInForce(order);
         
+        System.out.println("DEBUG: Processing order " + order.getOrderId() + " - " + order.getSide() + " " + order.getQuantity() + " @ " + order.getPrice());
+        System.out.println("DEBUG: Current bids count: " + bids.size() + ", asks count: " + asks.size());
+        
         // For FOK, check if order can be completely filled first
         if (timeInForce == TimeInForce.FOK && !canFillCompletely(order)) {
             MetricsCollector.getInstance().recordRejectedOrder();
@@ -43,6 +46,11 @@ public class OrderBook {
             matchSellOrder(order, trades);
         }
         
+        System.out.println("DEBUG: Trades generated: " + trades.size());
+        if (!trades.isEmpty()) {
+            trades.forEach(trade -> System.out.println("DEBUG: Trade - " + trade.getQuantity() + " @ " + trade.getPrice()));
+        }
+        
         // Handle Time-in-Force logic
         boolean shouldAddToBook = !order.isFilled() && 
                                  order.getOrderType() != com.phinity.common.dto.enums.OrderType.MARKET &&
@@ -50,11 +58,13 @@ public class OrderBook {
         
         if (shouldAddToBook) {
             addOrderToBook(order);
+            System.out.println("DEBUG: Order added to book");
         }
         
         // Publish events if there are trades or orderbook changed
         if (eventPublisher != null) {
             if (!trades.isEmpty()) {
+                System.out.println("DEBUG: Publishing trade execution event");
                 eventPublisher.publishTradeExecution(order.getSymbol(), trades);
             }
             eventPublisher.publishOrderBookUpdate(order.getSymbol(), this);
