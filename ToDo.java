@@ -18,5 +18,7 @@ public class ToDo {
     12. Compile JAR Snapshot versioning should be dynamic instead of hardcoded 1.0
     13. All services using kafka should have org.apache.kafka.* logging level to not mess up the logs with kafka messages
     14. Thoroughly review the trading fee calculation in order-service, matching-engine.
+    15. implement IP verification if changed at time of login. Verify email, sms, and Google 2FA before allowing login. This feature is
+    only for users with KycLevel higher than Starter.
      */
 }

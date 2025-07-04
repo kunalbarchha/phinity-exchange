@@ -19,8 +19,17 @@ This guide covers the complete deployment process for Phinity Exchange services 
 # Build and package all services
 ./package.sh
 
+# Build specific service only
+./package.sh user-service
+./package.sh matching-engine
+
+# Build specific module only
+./package.sh dto-module
+./package.sh mongo-module
+
 # Custom deployment directory
 ./package.sh /path/to/custom/deployment
+./package.sh /path/to/custom/deployment user-service
 ```
 
 ### 2. Deploy Services
@@ -46,6 +55,58 @@ This guide covers the complete deployment process for Phinity Exchange services 
 | tradingview-service | 8007 | TradingView Integration |
 | wallet-service | 8008 | Wallet Management |
 | websocket-service | 8009 | Real-time Streaming |
+
+## Build Commands
+
+### Package All Components
+```bash
+# Build all services and modules
+./package.sh
+
+# Build with custom deployment directory
+./package.sh /custom/deployment/path
+```
+
+### Package Individual Services
+```bash
+# Build specific services
+./package.sh eureka-service
+./package.sh gateway-service
+./package.sh user-service
+./package.sh market-service
+./package.sh admin-service
+./package.sh matching-service
+./package.sh order-service
+./package.sh tradingview-service
+./package.sh wallet-service
+./package.sh websocket-service
+./package.sh matching-engine
+```
+
+### Package Individual Modules
+```bash
+# Build specific modules
+./package.sh dto-module
+./package.sh config-module
+./package.sh utils-module
+./package.sh jwt-module
+./package.sh email-module
+./package.sh sms-module
+./package.sh file-module
+./package.sh mongo-module
+./package.sh redis-module
+./package.sh postgre-module
+./package.sh influx-module
+./package.sh kafka-module
+```
+
+### Package with Custom Directory
+```bash
+# Build specific components with custom path
+./package.sh /custom/path user-service
+./package.sh /custom/path dto-module
+./package.sh /custom/path matching-engine
+```
 
 ## Deployment Commands
 
@@ -140,7 +201,7 @@ Services start in dependency order:
 
 ### Initial Deployment
 ```bash
-# 1. Build services
+# 1. Build all services and modules
 ./package.sh
 
 # 2. Start all services
@@ -149,6 +210,32 @@ Services start in dependency order:
 # 3. Verify deployment
 ./deploy.sh status
 ./deploy.sh health
+```
+
+### Development Workflow
+```bash
+# 1. Build specific service after changes
+./package.sh user-service
+
+# 2. Restart only that service
+./deploy.sh restart user-service
+
+# 3. Check logs
+./deploy.sh logs user-service
+```
+
+### Module Development
+```bash
+# 1. Build updated module
+./package.sh dto-module
+
+# 2. Build dependent services
+./package.sh user-service
+./package.sh order-service
+
+# 3. Restart affected services
+./deploy.sh restart user-service
+./deploy.sh restart order-service
 ```
 
 ### Daily Operations
@@ -188,8 +275,12 @@ Services start in dependency order:
 # Check if ports are accessible
 ./deploy.sh health
 
-# Restart specific service
+# Rebuild and restart problematic service
+./package.sh service-name
 ./deploy.sh restart service-name
+
+# Show available services/modules for packaging
+./package.sh help
 ```
 
 ## Service URLs
@@ -237,11 +328,62 @@ The health check verifies:
 - PID files prevent duplicate service instances
 - Log files contain sensitive information - secure appropriately
 
+## Available Components
+
+### Services
+- eureka-service
+- gateway-service  
+- user-service
+- market-service
+- admin-service
+- matching-service
+- order-service
+- tradingview-service
+- wallet-service
+- websocket-service
+- matching-engine
+
+### Modules
+- dto-module (Common DTOs)
+- config-module (Configuration)
+- utils-module (Utilities)
+- jwt-module (JWT Authentication)
+- email-module (Email Service)
+- sms-module (SMS Service)
+- file-module (File Operations)
+- mongo-module (MongoDB Integration)
+- redis-module (Redis Integration)
+- postgre-module (PostgreSQL Integration)
+- influx-module (InfluxDB Integration)
+- kafka-module (Kafka Integration)
+
+## Development Tips
+
+### Efficient Development
+```bash
+# Only rebuild what changed
+./package.sh dto-module          # After DTO changes
+./package.sh user-service        # After user service changes
+./deploy.sh restart user-service # Restart only affected service
+```
+
+### Module Dependencies
+- Build modules before dependent services
+- Common modules (dto, config, utils) affect most services
+- Database modules (mongo, redis) affect data-related services
+
+### Performance Optimization
+- Use individual service packaging during development
+- Build all components only for production deployment
+- Monitor service logs for startup issues
+
 ## Support
 
 For issues:
 1. Check service logs: `./deploy.sh logs service-name`
 2. Verify service status: `./deploy.sh status`
 3. Run health check: `./deploy.sh health`
-4. Check process: `ps aux | grep java`
-5. Check ports: `netstat -tlnp | grep :800`
+4. Rebuild specific component: `./package.sh service-name`
+5. Check process: `ps aux | grep java`
+6. Check ports: `netstat -tlnp | grep :800`
+7. Show help: `./package.sh help` or `./deploy.sh help`

@@ -37,7 +37,7 @@ STARTUP_ORDER=("eureka-service" "gateway-service" "user-service" "market-service
 clear
 echo -e "${PURPLE}"
 echo "╔══════════════════════════════════════════════════════════════════════════════╗"
-echo "║                      🚀 PHINITY EXCHANGE DEPLOYER 🚀                        ║"
+echo "║                      🚀 PHINITY EXCHANGE DEPLOYER 🚀                         ║"
 echo "║                         Service Management System                            ║"
 echo "║                              Version 1.0.0                                   ║"
 echo "╚══════════════════════════════════════════════════════════════════════════════╝"
@@ -111,8 +111,16 @@ start_service() {
     
     echo -e "${WHITE}   🚀 Starting $service on port $port...${NC}"
     
+    # Get service-specific JVM options
+    local service_name_clean="${service//-/_}"  # Replace hyphens with underscores
+    local service_opts_var="${service_name_clean^^}_SERVICE_OPTS"
+    local service_opts=${!service_opts_var}
+    
+    # Use service-specific options if available, otherwise use global JAVA_OPTS
+    local jvm_opts="${service_opts:-$JAVA_OPTS}"
+    
     # Start the service
-    nohup java $JAVA_OPTS \
+    nohup java $jvm_opts \
         -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-local} \
         -Dserver.port=$port \
         -jar "$jar_file" \
