@@ -20,5 +20,6 @@ public class ToDo {
     14. Thoroughly review the trading fee calculation in order-service, matching-engine.
     15. implement IP verification if changed at time of login. Verify email, sms, and Google 2FA before allowing login. This feature is
     only for users with KycLevel higher than Starter.
+    16. KYC Validation : already approved user should not be able to modify any of the details, do BE validations for this in every applicable API.
      */
 }
