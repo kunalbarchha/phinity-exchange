@@ -89,7 +89,9 @@ public class OrderBook {
                 sellOrder.getPrice(),
                 tradeQuantity,
                 sellOrder.getOrderId(), // Maker: order that was in book
-                buyOrder.getOrderId()   // Taker: order that triggered match
+                buyOrder.getOrderId(),  // Taker: order that triggered match
+                buyOrder.getUserId(),   // Buyer user ID
+                sellOrder.getUserId()   // Seller user ID
             );
             trades.add(trade);
             
@@ -130,7 +132,9 @@ public class OrderBook {
                 buyOrder.getPrice(),
                 tradeQuantity,
                 buyOrder.getOrderId(),  // Maker: order that was in book
-                sellOrder.getOrderId()  // Taker: order that triggered match
+                sellOrder.getOrderId(), // Taker: order that triggered match
+                buyOrder.getUserId(),   // Buyer user ID
+                sellOrder.getUserId()   // Seller user ID
             );
             trades.add(trade);
             

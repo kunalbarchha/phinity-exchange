@@ -35,6 +35,8 @@ public class EventPublisher {
                 );
                 tradeInfo.setMakerOrderId(trade.getMakerOrderId());
                 tradeInfo.setTakerOrderId(trade.getTakerOrderId());
+                tradeInfo.setBuyerUserId(trade.getBuyerUserId());
+                tradeInfo.setSellerUserId(trade.getSellerUserId());
                 return tradeInfo;
             })
             .toList();

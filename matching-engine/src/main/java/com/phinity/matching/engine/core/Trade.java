@@ -13,9 +13,12 @@ public class Trade {
     private final LocalDateTime timestamp;
     private final String makerOrderId;
     private final String takerOrderId;
+    private final String buyerUserId;
+    private final String sellerUserId;
 
     public Trade(String tradeId, String symbol, String buyOrderId, String sellOrderId, 
-                 BigDecimal price, BigDecimal quantity, String makerOrderId, String takerOrderId) {
+                 BigDecimal price, BigDecimal quantity, String makerOrderId, String takerOrderId,
+                 String buyerUserId, String sellerUserId) {
         this.tradeId = tradeId;
         this.symbol = symbol;
         this.buyOrderId = buyOrderId;
@@ -24,6 +27,8 @@ public class Trade {
         this.quantity = quantity;
         this.makerOrderId = makerOrderId;
         this.takerOrderId = takerOrderId;
+        this.buyerUserId = buyerUserId;
+        this.sellerUserId = sellerUserId;
         this.timestamp = LocalDateTime.now();
     }
 
@@ -36,4 +41,6 @@ public class Trade {
     public LocalDateTime getTimestamp() { return timestamp; }
     public String getMakerOrderId() { return makerOrderId; }
     public String getTakerOrderId() { return takerOrderId; }
+    public String getBuyerUserId() { return buyerUserId; }
+    public String getSellerUserId() { return sellerUserId; }
 }
