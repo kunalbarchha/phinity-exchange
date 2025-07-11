@@ -6,12 +6,14 @@ import com.phinity.common.dto.models.PendingOrders;
 import com.phinity.matching.engine.service.EventPublisher;
 import com.phinity.matching.engine.service.EventStore;
 import com.phinity.matching.engine.metrics.MetricsCollector;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+@Slf4j
 public class OrderBook {
     private final ConcurrentSkipListMap<BigDecimal, Queue<PendingOrders>> bids = new ConcurrentSkipListMap<>(Collections.reverseOrder());
     private final ConcurrentSkipListMap<BigDecimal, Queue<PendingOrders>> asks = new ConcurrentSkipListMap<>();
@@ -55,7 +57,7 @@ public class OrderBook {
         // Publish events if there are trades or orderbook changed
         if (eventPublisher != null) {
             if (!trades.isEmpty()) {
-                System.out.println("DEBUG: Publishing trade execution event");
+                log.debug("DEBUG: Publishing trade execution event");
                 eventPublisher.publishTradeExecution(order.getSymbol(), trades);
             }
             eventPublisher.publishOrderBookUpdate(order.getSymbol(), this);
