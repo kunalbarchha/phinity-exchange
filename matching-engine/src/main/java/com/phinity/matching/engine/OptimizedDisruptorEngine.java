@@ -8,7 +8,6 @@ import com.phinity.common.dto.models.PendingOrders;
 import com.phinity.matching.engine.core.OrderBook;
 import com.phinity.matching.engine.core.Trade;
 import com.phinity.matching.engine.service.EventPublisher;
-import com.phinity.matching.engine.service.EventStore;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -94,11 +93,7 @@ public class OptimizedDisruptorEngine {
     public void setEventPublisher(EventPublisher eventPublisher) {
         this.book.setEventPublisher(eventPublisher);
     }
-    
-    public void setEventStore(EventStore eventStore) {
-        this.book.setEventStore(eventStore);
-    }
-    
+
     public String getSymbol() { return symbol; }
     public long getProcessedOrdersCount() { return processedOrders.get(); }
     public OrderBook getOrderBook() { return book; }

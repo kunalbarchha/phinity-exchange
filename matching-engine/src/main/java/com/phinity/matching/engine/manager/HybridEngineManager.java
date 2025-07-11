@@ -9,7 +9,6 @@ import com.phinity.matching.engine.core.OrderBook;
 import com.phinity.matching.engine.core.Trade;
 import com.phinity.matching.engine.metrics.MetricsCollector;
 import com.phinity.matching.engine.service.EventPublisher;
-import com.phinity.matching.engine.service.EventStore;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -22,7 +21,6 @@ public class HybridEngineManager {
     private final ConcurrentHashMap<String, OptimizedDisruptorEngine> disruptorEngines;
     private final PairConfigurationManager configManager;
     private EventPublisher eventPublisher;
-    private EventStore eventStore;
 
     public HybridEngineManager() {
         this.standardManager = new EngineManager();
@@ -34,12 +32,6 @@ public class HybridEngineManager {
         this.eventPublisher = eventPublisher;
         this.standardManager.setEventPublisher(eventPublisher);
         this.disruptorEngines.values().forEach(engine -> engine.setEventPublisher(eventPublisher));
-    }
-    
-    public void setEventStore(EventStore eventStore) {
-        this.eventStore = eventStore;
-        this.standardManager.setEventStore(eventStore);
-        this.disruptorEngines.values().forEach(engine -> engine.setEventStore(eventStore));
     }
 
     public CompletableFuture<List<Trade>> processOrder(String orderId, String symbol,

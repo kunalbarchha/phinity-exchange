@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="dto-module" />
+        <module name="email-module" />
+        <module name="file-module" />
+        <module name="kafka-module" />
+        <module name="user-service" />
+        <module name="sms-module" />
+        <module name="influx-module" />
+        <module name="mongo-module" />
+        <module name="eureka-service" />
+        <module name="matching-engine" />
+        <module name="utils-module" />
+        <module name="gateway-service" />
+        <module name="jwt-module" />
+        <module name="matching-service" />
+        <module name="postgre-module" />
+        <module name="tradingview-service" />
+        <module name="order-service" />
+        <module name="redis-module" />
+        <module name="admin-service" />
+        <module name="websocket-service" />
+        <module name="wallet-service" />
+        <module name="config-module" />
+        <module name="market-service" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="feign-module" target="17" />
+      <module name="redis-service" target="17" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="admin-service" options="-parameters" />
+      <module name="common-modules" options="-parameters" />
+      <module name="config-module" options="-parameters" />
+      <module name="database-module" options="-parameters" />
+      <module name="dto-module" options="-parameters" />
+      <module name="email-module" options="-parameters" />
+      <module name="eureka-service" options="-parameters" />
+      <module name="feign-module" options="-parameters" />
+      <module name="file-module" options="-parameters" />
+      <module name="gateway-service" options="-parameters" />
+      <module name="influx-module" options="-parameters" />
+      <module name="jwt-module" options="-parameters" />
+      <module name="kafka-module" options="-parameters" />
+      <module name="market-service" options="-parameters" />
+      <module name="matching-engine" options="-parameters" />
+      <module name="matching-service" options="-parameters" />
+      <module name="mongo-module" options="-parameters" />
+      <module name="order-service" options="-parameters" />
+      <module name="phinity-exchange" options="-parameters" />
+      <module name="postgre-module" options="-parameters" />
+      <module name="redis-module" options="-parameters" />
+      <module name="redis-service" options="-parameters" />
+      <module name="sms-module" options="-parameters" />
+      <module name="tradingview-service" options="-parameters" />
+      <module name="user-service" options="-parameters" />
+      <module name="utils-module" options="-parameters" />
+      <module name="wallet-service" options="-parameters" />
+      <module name="websocket-service" options="-parameters" />
+    </option>
+  </component>
+</project>

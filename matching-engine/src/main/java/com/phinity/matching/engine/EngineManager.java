@@ -6,7 +6,6 @@ import com.phinity.matching.engine.core.MatchingEngine;
 import com.phinity.matching.engine.core.OrderBook;
 import com.phinity.matching.engine.core.Trade;
 import com.phinity.matching.engine.service.EventPublisher;
-import com.phinity.matching.engine.service.EventStore;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -63,11 +62,6 @@ public class EngineManager {
     public OrderBook getOrderBook(String symbol) {
         MatchingEngine engine = getEngine(symbol);
         return engine != null ? engine.getOrderBook() : null;
-    }
-    
-    public void setEventStore(EventStore eventStore) {
-        this.highVolumePool.setEventStore(eventStore);
-        this.standardPool.setEventStore(eventStore);
     }
 
     public void shutdown() {

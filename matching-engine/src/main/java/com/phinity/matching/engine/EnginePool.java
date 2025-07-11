@@ -4,7 +4,6 @@ import com.phinity.common.dto.models.PendingOrders;
 import com.phinity.matching.engine.core.MatchingEngine;
 import com.phinity.matching.engine.core.Trade;
 import com.phinity.matching.engine.service.EventPublisher;
-import com.phinity.matching.engine.service.EventStore;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -30,10 +29,6 @@ public class EnginePool {
     public void setEventPublisher(EventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
         engines.values().forEach(engine -> engine.setEventPublisher(eventPublisher));
-    }
-    
-    public void setEventStore(EventStore eventStore) {
-        engines.values().forEach(engine -> engine.setEventStore(eventStore));
     }
     
     private MatchingEngine getOrCreateEngine(String symbol) {

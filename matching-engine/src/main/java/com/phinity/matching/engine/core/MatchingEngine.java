@@ -2,7 +2,6 @@ package com.phinity.matching.engine.core;
 
 import com.phinity.common.dto.models.PendingOrders;
 import com.phinity.matching.engine.service.EventPublisher;
-import com.phinity.matching.engine.service.EventStore;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -19,10 +18,6 @@ public class MatchingEngine {
     
     public void setEventPublisher(EventPublisher eventPublisher) {
         this.orderBook.setEventPublisher(eventPublisher);
-    }
-    
-    public void setEventStore(EventStore eventStore) {
-        this.orderBook.setEventStore(eventStore);
     }
 
     public List<Trade> match(PendingOrders order) {

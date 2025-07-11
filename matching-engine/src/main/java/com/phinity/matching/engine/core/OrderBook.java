@@ -4,7 +4,6 @@ import com.phinity.common.dto.enums.Side;
 import com.phinity.common.dto.enums.TimeInForce;
 import com.phinity.common.dto.models.PendingOrders;
 import com.phinity.matching.engine.service.EventPublisher;
-import com.phinity.matching.engine.service.EventStore;
 import com.phinity.matching.engine.metrics.MetricsCollector;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,14 +18,9 @@ public class OrderBook {
     private final ConcurrentSkipListMap<BigDecimal, Queue<PendingOrders>> asks = new ConcurrentSkipListMap<>();
     private final AtomicLong tradeIdCounter = new AtomicLong(0);
     private EventPublisher eventPublisher;
-    private EventStore eventStore;
 
     public void setEventPublisher(EventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
-    }
-    
-    public void setEventStore(EventStore eventStore) {
-        this.eventStore = eventStore;
     }
     
     public List<Trade> matchOrder(PendingOrders order) {

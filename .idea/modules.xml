@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/phinity-exchange.iml" filepath="$PROJECT_DIR$/.idea/phinity-exchange.iml" />
+      <module fileurl="file://$PROJECT_DIR$/wallet-service/wallet-service.iml" filepath="$PROJECT_DIR$/wallet-service/wallet-service.iml" />
+      <module fileurl="file://$PROJECT_DIR$/websocket-service/websocket-service.iml" filepath="$PROJECT_DIR$/websocket-service/websocket-service.iml" />
+    </modules>
+  </component>
+</project>
