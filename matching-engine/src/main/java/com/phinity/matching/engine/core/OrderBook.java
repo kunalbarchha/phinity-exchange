@@ -165,6 +165,32 @@ public class OrderBook {
             .toList();
     }
     
+    public synchronized boolean cancelOrder(String orderId) {
+        // Search in bids
+        for (Map.Entry<BigDecimal, Queue<PendingOrders>> entry : bids.entrySet()) {
+            Queue<PendingOrders> orders = entry.getValue();
+            if (orders.removeIf(order -> order.getOrderId().equals(orderId))) {
+                if (orders.isEmpty()) {
+                    bids.remove(entry.getKey());
+                }
+                return true;
+            }
+        }
+        
+        // Search in asks
+        for (Map.Entry<BigDecimal, Queue<PendingOrders>> entry : asks.entrySet()) {
+            Queue<PendingOrders> orders = entry.getValue();
+            if (orders.removeIf(order -> order.getOrderId().equals(orderId))) {
+                if (orders.isEmpty()) {
+                    asks.remove(entry.getKey());
+                }
+                return true;
+            }
+        }
+        
+        return false; // Order not found
+    }
+    
     private TimeInForce getTimeInForce(PendingOrders order) {
         // Default to GTC if not specified
         return order.getTimeInForce() != null ? order.getTimeInForce() : TimeInForce.GTC;
