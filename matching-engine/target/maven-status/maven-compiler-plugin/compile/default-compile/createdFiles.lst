@@ -1,6 +1,5 @@
 com/phinity/matching/engine/service/EventPublisher.class
 com/phinity/matching/engine/core/MatchingEngine.class
-com/phinity/matching/engine/service/EventStore.class
 com/phinity/matching/engine/events/OrderRejectedEvent.class
 com/phinity/matching/engine/events/OrderEvent.class
 com/phinity/matching/engine/OrderEvent.class
