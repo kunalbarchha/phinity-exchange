@@ -112,10 +112,27 @@ build_all() {
     echo -e "${WHITE}   Building in dependency order...${NC}"
     echo
     
-    # First build all modules
+    # First build all modules in dependency order
     echo -e "${CYAN}🧩 Building Modules${NC}"
     local failed_modules=()
-    for module in "${!MODULES[@]}"; do
+    
+    # Build modules in correct dependency order
+    local module_order=(
+        "dto-module"
+        "config-module"
+        "utils-module"
+        "jwt-module"
+        "email-module"
+        "sms-module"
+        "file-module"
+        "mongo-module"
+        "redis-module"
+        "postgre-module"
+        "influx-module"
+        "kafka-module"
+    )
+    
+    for module in "${module_order[@]}"; do
         if ! build_module "$module"; then
             failed_modules+=("$module")
         fi
@@ -275,6 +292,32 @@ main() {
     # Build based on target
     if [ -n "$TARGET_SERVICE" ]; then
         echo -e "${BLUE}📦 Building Service: $TARGET_SERVICE${NC}"
+        echo -e "${WHITE}   Building required modules first...${NC}"
+        
+        # Build all modules first for any service
+        local module_order=(
+            "dto-module"
+            "config-module"
+            "utils-module"
+            "jwt-module"
+            "email-module"
+            "sms-module"
+            "file-module"
+            "mongo-module"
+            "redis-module"
+            "postgre-module"
+            "influx-module"
+            "kafka-module"
+        )
+        
+        for module in "${module_order[@]}"; do
+            if ! build_module "$module"; then
+                echo -e "${RED}❌ Module build failed: $module${NC}"
+                exit 1
+            fi
+        done
+        
+        echo -e "${WHITE}   Building service...${NC}"
         if ! build_service "$TARGET_SERVICE"; then
             echo -e "${RED}❌ Build failed${NC}"
             exit 1
