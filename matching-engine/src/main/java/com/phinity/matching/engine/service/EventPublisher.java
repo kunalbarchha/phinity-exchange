@@ -42,6 +42,8 @@ public class EventPublisher {
                 tradeInfo.setTakerOrderId(trade.getTakerOrderId());
                 tradeInfo.setBuyerUserId(trade.getBuyerUserId());
                 tradeInfo.setSellerUserId(trade.getSellerUserId());
+                // Set isBuyerMaker based on whether the buy order was the maker
+                tradeInfo.setBuyerMaker(trade.getBuyOrderId().equals(trade.getMakerOrderId()));
                 return tradeInfo;
             })
             .toList();
