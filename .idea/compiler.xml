@@ -13,7 +13,6 @@
         <module name="kafka-module" />
         <module name="user-service" />
         <module name="sms-module" />
-        <module name="influx-module" />
         <module name="mongo-module" />
         <module name="eureka-service" />
         <module name="matching-engine" />
@@ -34,6 +33,7 @@
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="feign-module" target="17" />
+      <module name="influx-module" target="17" />
       <module name="redis-service" target="17" />
     </bytecodeTargetLevel>
   </component>

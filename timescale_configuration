@@ -1,0 +1,234 @@
+Install latest postgres, this guide is based on postgres 17
+Install TimeScaleDB extension for postgres 17, following their official documentation.
+
+create database: trade_data
+create table: trades
+
+CREATE TABLE trades (
+    symbol TEXT NOT NULL,
+    timestamp TIMESTAMPTZ NOT NULL,
+    price NUMERIC NOT NULL,
+    volume NUMERIC NOT NULL,
+    PRIMARY KEY (symbol, timestamp)
+);
+
+create hypertable:
+
+SELECT create_hypertable('trades', 'timestamp', if_not_exists => TRUE);
+
+Add compression:
+
+ALTER TABLE ticks SET (
+  timescaledb.compress,
+  timescaledb.compress_orderby = 'timestamp',
+  timescaledb.compress_segmentby = 'symbol'
+);
+
+Add retention policy for trades:
+SELECT add_retention_policy('trades', INTERVAL '1 year');
+
+Create materialized view for one_minute_candle:
+
+CREATE MATERIALIZED VIEW one_minute_candle
+WITH (timescaledb.continuous) AS
+SELECT time_bucket('1m', timestamp),
+       "trades"."symbol",
+       candlestick_agg(timestamp, price, volume) as candlestick
+FROM "trades"
+GROUP BY 1, 2
+ORDER BY 1
+WITH DATA;
+
+create candle creation to real-time:
+ALTER MATERIALIZED VIEW one_minute_candle SET (timescaledb.materialized_only = false);
+
+add retention policies for views as per your supported resolutions:
+SELECT add_retention_policy('one_minute_candle', INTERVAL '1 year');
+
+Create views for each resolution:
+
+create view:
+
+CREATE VIEW one_minute AS
+SELECT time_bucket, symbol, high(candlestick) AS high, open(candlestick) AS open, close(candlestick) AS close, low(candlestick) AS low, volume(candlestick) AS volume
+FROM one_minute_candle;
+
+CREATE VIEW five_minute AS
+SELECT time_bucket, symbol, high(candlestick) AS high, open(candlestick) AS open, close(candlestick) AS close, low(candlestick) AS low, volume(candlestick) AS volume
+FROM five_minute_candle;
+
+CREATE VIEW fifteen_minute AS
+SELECT time_bucket, symbol, high(candlestick) AS high, open(candlestick) AS open, close(candlestick) AS close, low(candlestick) AS low, volume(candlestick) AS volume
+FROM fifteen_minute_candle;
+
+CREATE VIEW one_hour AS
+SELECT time_bucket, symbol, high(candlestick) AS high, open(candlestick) AS open, close(candlestick) AS close, low(candlestick) AS low, volume(candlestick) AS volume
+FROM one_hour_candle;
+
+
+// modify naming in below SQL script to match naming in this project
+
+CREATE TABLE trades
+(
+    id        BIGINT GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) NOT NULL,
+    timestamp TIMESTAMPTZ                                                       NOT NULL,
+    market    TEXT                                                              NOT NULL,
+    price     DOUBLE PRECISION                                                  NULL,
+    volume    INT                                                               NULL
+);
+
+SELECT create_hypertable('trades', 'timestamp');
+
+CREATE UNIQUE INDEX ix_symbol_time ON trades (market, timestamp DESC);
+
+-- create the cagg hierarchy
+
+-- one minute
+  -- fifteen minute
+    -- one hour
+      -- one day
+        -- one week
+        -- one month
+
+CREATE MATERIALIZED VIEW one_minute_cagg WITH (timescaledb.continuous) AS
+SELECT time_bucket('1 min', "timestamp") AS ts, market, candlestick_agg("timestamp", price, volume) AS cs
+FROM trades srt
+GROUP BY ts, market;
+
+CREATE MATERIALIZED VIEW fifteen_minute_cagg WITH (timescaledb.continuous) AS
+SELECT time_bucket('15 min', "ts") AS ts, market, rollup(cs) AS cs
+FROM one_minute_cagg srt
+GROUP BY time_bucket('15 min', "ts"), market;
+
+CREATE MATERIALIZED VIEW one_hour_cagg WITH (timescaledb.continuous) AS
+SELECT time_bucket('1 hour', "ts") AS ts, market, rollup(cs) AS cs
+FROM fifteen_minute_cagg srt
+GROUP BY time_bucket('1 hour', "ts"), market;
+
+CREATE MATERIALIZED VIEW one_day_cagg WITH (timescaledb.continuous) AS
+SELECT time_bucket('1 day', "ts") AS ts, market, rollup(cs) AS cs
+FROM one_hour_cagg srt
+GROUP BY time_bucket('1 day', "ts"), market;
+
+CREATE MATERIALIZED VIEW one_week_cagg WITH (timescaledb.continuous) AS
+SELECT time_bucket('1 week', "ts") AS ts, market, rollup(cs) AS cs
+FROM one_day_cagg srt
+GROUP BY time_bucket('1 week', "ts"), market;
+
+CREATE MATERIALIZED VIEW one_month_cagg WITH (timescaledb.continuous) AS
+SELECT time_bucket('1 month', "ts") AS ts, market, rollup(cs) AS cs
+FROM one_day_cagg srt
+GROUP BY time_bucket('1 month', "ts"), market;
+
+
+
+--- cagg compression settings
+
+-- one minute
+ALTER MATERIALIZED VIEW one_minute_cagg SET (timescaledb.compress = true, timescaledb.compress_segmentby = 'market', timescaledb.compress_orderby = 'ts');
+ALTER MATERIALIZED VIEW one_minute_cagg SET (timescaledb.materialized_only = true);
+
+-- fifteen minute
+ALTER MATERIALIZED VIEW fifteen_minute_cagg SET (timescaledb.compress = true, timescaledb.compress_segmentby = 'market', timescaledb.compress_orderby = 'ts');
+ALTER MATERIALIZED VIEW fifteen_minute_cagg SET (timescaledb.materialized_only = true);
+
+-- one hour
+ALTER MATERIALIZED VIEW one_hour_cagg SET (timescaledb.compress = true, timescaledb.compress_segmentby = 'market', timescaledb.compress_orderby = 'ts');
+ALTER MATERIALIZED VIEW one_hour_cagg SET (timescaledb.materialized_only = true);
+
+-- one day
+ALTER MATERIALIZED VIEW one_day_cagg SET (timescaledb.compress = true, timescaledb.compress_segmentby = 'market', timescaledb.compress_orderby = 'ts');
+ALTER MATERIALIZED VIEW one_day_cagg SET (timescaledb.materialized_only = true);
+
+-- one week
+ALTER MATERIALIZED VIEW one_week_cagg SET (timescaledb.compress = true, timescaledb.compress_segmentby = 'market', timescaledb.compress_orderby = 'ts');
+ALTER MATERIALIZED VIEW one_week_cagg SET (timescaledb.materialized_only = true);
+
+-- one month
+ALTER MATERIALIZED VIEW one_month_cagg SET (timescaledb.compress = true, timescaledb.compress_segmentby = 'market', timescaledb.compress_orderby = 'ts');
+ALTER MATERIALIZED VIEW one_month_cagg SET (timescaledb.materialized_only = true);
+
+
+--- cagg policies
+SELECT add_continuous_aggregate_policy('one_minute_cagg', start_offset => INTERVAL '3 days', end_offset => INTERVAL '1 hour', schedule_interval => INTERVAL '1 days');
+SELECT add_continuous_aggregate_policy('fifteen_minute_cagg', start_offset => INTERVAL '3 days', end_offset => INTERVAL '1 hour', schedule_interval => INTERVAL '1 days');
+SELECT add_continuous_aggregate_policy('one_hour_cagg', start_offset => INTERVAL '3 days', end_offset => INTERVAL '1 hour', schedule_interval => INTERVAL '1 days');
+SELECT add_continuous_aggregate_policy('one_day_cagg', start_offset => INTERVAL '3 days', end_offset => INTERVAL '1 hour', schedule_interval => INTERVAL '1 days');
+SELECT add_continuous_aggregate_policy('one_week_cagg', start_offset => INTERVAL '3 days', end_offset => INTERVAL '1 hour', schedule_interval => INTERVAL '1 days');
+SELECT add_continuous_aggregate_policy('one_month_cagg', start_offset => INTERVAL '3 days', end_offset => INTERVAL '1 hour', schedule_interval => INTERVAL '1 days');
+
+-- compression policies
+SELECT add_compression_policy('trades', compress_after => INTERVAL '1 day');
+SELECT add_compression_policy('one_minute_cagg', compress_after => INTERVAL '1 day');
+SELECT add_compression_policy('fifteen_minute_cagg', compress_after => INTERVAL '1 day');
+SELECT add_compression_policy('one_hour_cagg', compress_after => INTERVAL '1 day');
+SELECT add_compression_policy('one_day_cagg', compress_after => INTERVAL '1 day');
+SELECT add_compression_policy('one_week_cagg', compress_after => INTERVAL '1 day');
+SELECT add_compression_policy('one_month_cagg', compress_after => INTERVAL '1 day');
+
+-- add retention policies
+SELECT add_retention_policy('trades', INTERVAL '1 year');
+SELECT add_retention_policy('one_minute_cagg', INTERVAL '1 year');
+SELECT add_retention_policy('fifteen_minute_cagg', INTERVAL '1 year');
+SELECT add_retention_policy('one_hour_cagg', INTERVAL '1 year');
+SELECT add_retention_policy('one_day_cagg', INTERVAL '1 year');
+SELECT add_retention_policy('one_week_cagg', INTERVAL '1 year');
+SELECT add_retention_policy('one_month_cagg', INTERVAL '1 year');
+
+
+-- create the views
+CREATE VIEW one_minute AS
+SELECT ts, market, high(cs) AS high, open(cs) AS open, close(cs) AS close, low(cs) AS low, volume(cs) AS volume
+FROM one_minute_cagg;
+
+CREATE VIEW five_minute AS
+WITH
+    ru AS (SELECT time_bucket('5 min', "ts") AS ts, market, rollup(cs) AS cs
+           FROM one_minute_cagg srt
+           GROUP BY time_bucket('5 min', "ts"), market)
+SELECT ts, market, high(cs) AS high, open(cs) AS open, close(cs) AS close, low(cs) AS low, volume(cs) AS volume
+FROM ru;
+
+CREATE VIEW fifteen_minute AS
+SELECT ts, market, high(cs) AS high, open(cs) AS open, close(cs) AS close, low(cs) AS low, volume(cs) AS volume
+FROM fifteen_minute_cagg;
+
+CREATE VIEW thirty_minute AS
+WITH
+    ru AS (SELECT time_bucket('30 min', "ts") AS ts, market, rollup(cs) AS cs
+           FROM fifteen_minute_cagg srt
+           GROUP BY time_bucket('30 min', "ts"), market)
+SELECT ts, market, high(cs) AS high, open(cs) AS open, close(cs) AS close, low(cs) AS low, volume(cs) AS volume
+FROM ru;
+
+CREATE VIEW one_hour AS
+SELECT ts, market, high(cs) AS high, open(cs) AS open, close(cs) AS close, low(cs) AS low, volume(cs) AS volume
+FROM one_hour_cagg;
+
+CREATE VIEW two_hours AS
+WITH
+    ru AS (SELECT time_bucket('2 hour', "ts") AS ts, market, rollup(cs) AS cs
+           FROM one_hour_cagg srt
+           GROUP BY time_bucket('2 hour', "ts"), market)
+SELECT ts, market, high(cs) AS high, open(cs) AS open, close(cs) AS close, low(cs) AS low, volume(cs) AS volume
+FROM ru;
+
+CREATE VIEW four_hours AS
+WITH
+    ru AS (SELECT time_bucket('4 hour', "ts") AS ts, market, rollup(cs) AS cs
+           FROM one_hour_cagg srt
+           GROUP BY time_bucket('4 hour', "ts"), market)
+SELECT ts, market, high(cs) AS high, open(cs) AS open, close(cs) AS close, low(cs) AS low, volume(cs) AS volume
+FROM ru;
+
+CREATE VIEW one_day AS
+SELECT ts, market, high(cs) AS high, open(cs) AS open, close(cs) AS close, low(cs) AS low, volume(cs) AS volume
+FROM one_day_cagg;
+
+CREATE VIEW one_week AS
+SELECT ts, market, high(cs) AS high, open(cs) AS open, close(cs) AS close, low(cs) AS low, volume(cs) AS volume
+FROM one_week_cagg;
+
+CREATE VIEW one_month AS
+SELECT ts, market, high(cs) AS high, open(cs) AS open, close(cs) AS close, low(cs) AS low, volume(cs) AS volume
+FROM one_month_cagg;

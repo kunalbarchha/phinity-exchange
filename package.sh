@@ -36,7 +36,6 @@ declare -A MODULES=(
     ["mongo-module"]="database-module/mongo-module"
     ["redis-module"]="database-module/redis-module"
     ["postgre-module"]="database-module/postgre-module"
-    ["influx-module"]="database-module/influx-module"
     ["kafka-module"]="kafka-module"
 )
 
@@ -128,7 +127,6 @@ build_all() {
         "mongo-module"
         "redis-module"
         "postgre-module"
-        "influx-module"
         "kafka-module"
     )
     
@@ -306,7 +304,6 @@ main() {
             "mongo-module"
             "redis-module"
             "postgre-module"
-            "influx-module"
             "kafka-module"
         )
         
