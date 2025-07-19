@@ -23,6 +23,7 @@ public class ToDo {
         16. KYC Validation : already approved user should not be able to modify any of the details, do BE validations for this in every applicable API.
         17. TradingLevels Front-end UI table showing different level of Trading level and kind of benefit user's get based on trading volume.
         18. Scan all mongo entities, and cross-check if they are being updated at respective event in the system.
+        19. Support for TWAP orders for large quantities.
      */
 
     /*
