@@ -191,6 +191,93 @@ public class OrderBook {
         return false; // Order not found
     }
     
+    /**
+     * Modifies an existing order in the order book
+     * @param orderId The ID of the order to modify
+     * @param newPrice The new price (null to keep existing price)
+     * @param newQuantity The new quantity (null to keep existing quantity)
+     * @return The modified order if successful, null if order not found
+     */
+    public synchronized PendingOrders modifyOrder(String orderId, BigDecimal newPrice, BigDecimal newQuantity) {
+        // Find the order in both books
+        PendingOrders existingOrder = findOrder(orderId);
+        if (existingOrder == null) {
+            return null; // Order not found
+        }
+        
+        // If only reducing quantity, we can modify in place to maintain time priority
+        if (newPrice == null || newPrice.compareTo(existingOrder.getPrice()) == 0) {
+            if (newQuantity != null && newQuantity.compareTo(existingOrder.getRemainingQuantity()) <= 0) {
+                // Reducing quantity - maintain time priority
+                BigDecimal reduction = existingOrder.getRemainingQuantity().subtract(newQuantity);
+                existingOrder.reduceQuantity(reduction);
+                
+                // Publish orderbook update if needed
+                if (eventPublisher != null) {
+                    eventPublisher.publishOrderBookUpdate(existingOrder.getSymbol(), this);
+                }
+                
+                return existingOrder;
+            }
+        }
+        
+        // For price change or quantity increase, cancel and replace
+        if (cancelOrder(orderId)) {
+            // Create new order with updated parameters
+            PendingOrders newOrder = new PendingOrders(
+                orderId,
+                existingOrder.getSymbol(),
+                existingOrder.getSide(),
+                newPrice != null ? newPrice : existingOrder.getPrice(),
+                newQuantity != null ? newQuantity : existingOrder.getQuantity()
+            );
+            newOrder.setOrderType(existingOrder.getOrderType());
+            newOrder.setTimeInForce(existingOrder.getTimeInForce());
+            newOrder.setUserId(existingOrder.getUserId());
+            
+            // Add to book if not filled
+            if (!newOrder.isFilled()) {
+                addOrderToBook(newOrder);
+                
+                // Publish orderbook update
+                if (eventPublisher != null) {
+                    eventPublisher.publishOrderBookUpdate(newOrder.getSymbol(), this);
+                }
+            }
+            
+            return newOrder;
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Finds an order in the order book by ID
+     * @param orderId The order ID to find
+     * @return The order if found, null otherwise
+     */
+    private PendingOrders findOrder(String orderId) {
+        // Search in bids
+        for (Queue<PendingOrders> orders : bids.values()) {
+            for (PendingOrders order : orders) {
+                if (order.getOrderId().equals(orderId)) {
+                    return order;
+                }
+            }
+        }
+        
+        // Search in asks
+        for (Queue<PendingOrders> orders : asks.values()) {
+            for (PendingOrders order : orders) {
+                if (order.getOrderId().equals(orderId)) {
+                    return order;
+                }
+            }
+        }
+        
+        return null; // Order not found
+    }
+    
     private TimeInForce getTimeInForce(PendingOrders order) {
         // Default to GTC if not specified
         return order.getTimeInForce() != null ? order.getTimeInForce() : TimeInForce.GTC;

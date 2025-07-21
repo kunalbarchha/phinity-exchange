@@ -36,4 +36,15 @@ public class MatchingEngine {
     public OrderBook getOrderBook(){
         return orderBook;
     }
+    
+    /**
+     * Modifies an existing order in the order book
+     * @param orderId The ID of the order to modify
+     * @param newPrice The new price (null to keep existing price)
+     * @param newQuantity The new quantity (null to keep existing quantity)
+     * @return The modified order if successful, null if order not found
+     */
+    public PendingOrders modifyOrder(String orderId, BigDecimal newPrice, BigDecimal newQuantity) {
+        return orderBook.modifyOrder(orderId, newPrice, newQuantity);
+    }
 }

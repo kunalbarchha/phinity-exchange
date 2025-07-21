@@ -106,6 +106,29 @@ public class HybridEngineManager {
             return standardManager.getOrderBook(symbol);
         }
     }
+    
+    /**
+     * Modifies an existing order in the order book
+     * @param orderId The ID of the order to modify
+     * @param symbol The trading pair symbol
+     * @param newPrice The new price (null to keep existing price)
+     * @param newQuantity The new quantity (null to keep existing quantity)
+     * @return The modified order if successful, null if order not found
+     */
+    public PendingOrders modifyOrder(String orderId, String symbol, BigDecimal newPrice, BigDecimal newQuantity) {
+        if (configManager.isHighVolumePair(symbol)) {
+            OptimizedDisruptorEngine engine = disruptorEngines.get(symbol);
+            if (engine != null) {
+                return engine.getOrderBook().modifyOrder(orderId, newPrice, newQuantity);
+            }
+        } else {
+            MatchingEngine engine = standardManager.getEngine(symbol);
+            if (engine != null) {
+                return engine.modifyOrder(orderId, newPrice, newQuantity);
+            }
+        }
+        return null;
+    }
 
     public void shutdown() {
         standardManager.shutdown();
