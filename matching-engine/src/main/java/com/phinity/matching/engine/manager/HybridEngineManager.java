@@ -5,6 +5,7 @@ import com.phinity.common.dto.models.PendingOrders;
 import com.phinity.matching.engine.EngineManager;
 import com.phinity.matching.engine.OptimizedDisruptorEngine;
 import com.phinity.matching.engine.config.PairConfigurationManager;
+import com.phinity.matching.engine.core.MatchingEngine;
 import com.phinity.matching.engine.core.OrderBook;
 import com.phinity.matching.engine.core.Trade;
 import com.phinity.matching.engine.metrics.MetricsCollector;
