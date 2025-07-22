@@ -1,92 +1,74 @@
 package com.phinity.matching.engine;
 
-import com.lmax.disruptor.*;
+import com.lmax.disruptor.EventHandler;
+import com.lmax.disruptor.PhasedBackoffWaitStrategy;
+import com.lmax.disruptor.RingBuffer;
+import com.lmax.disruptor.YieldingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
+import com.phinity.common.dto.enums.OrderType;
 import com.phinity.common.dto.enums.Side;
 import com.phinity.common.dto.models.PendingOrders;
 import com.phinity.matching.engine.core.OrderBook;
 import com.phinity.matching.engine.core.Trade;
 import com.phinity.matching.engine.service.EventPublisher;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.TimeUnit;
 
-public class OptimizedDisruptorEngine {
+@Getter
+public class OptimizedDisruptorEngine implements EventHandler<OrderEvent> {
     private final String symbol;
     private final Disruptor<OrderEvent> disruptor;
     private final RingBuffer<OrderEvent> ringBuffer;
     private final OrderBook book;
-    private final AtomicLong processedOrders = new AtomicLong(0);
+    private long processedOrders = 0;
 
     public OptimizedDisruptorEngine(String symbol) {
         this.symbol = symbol;
         this.book = new OrderBook();
-        
-        ThreadFactory threadFactory = r -> {
-            Thread t = new Thread(r, "OptimizedEngine-" + symbol);
-            t.setDaemon(false);
-            return t;
-        };
 
-        // Use YieldingWaitStrategy for better performance
+        // Corrected: Provide a ThreadFactory, not an ExecutorService
+        ThreadFactory threadFactory = r -> new Thread(r, "Disruptor-" + symbol);
+
         this.disruptor = new Disruptor<>(
-            OrderEvent::new,
-            1024 * 1024,
-            threadFactory,
-            ProducerType.MULTI,
-            new YieldingWaitStrategy() // Better than BlockingWaitStrategy
+                OrderEvent::new,
+                1024 * 64, // 64k buffer size
+                threadFactory, // Corrected argument
+                ProducerType.SINGLE,
+                new PhasedBackoffWaitStrategy(1, 1, TimeUnit.MILLISECONDS, new YieldingWaitStrategy())
         );
 
-        disruptor.handleEventsWith(this::handleOrderEvent);
-        disruptor.start();
-        this.ringBuffer = disruptor.getRingBuffer();
+        disruptor.handleEventsWith(this);
+        this.ringBuffer = disruptor.start();
     }
 
-    public List<Trade> processOrderSync(String orderId, String symbol,
-                                        Side side, BigDecimal price, BigDecimal quantity,
-                                        com.phinity.common.dto.enums.OrderType orderType) {
+    public CompletableFuture<List<Trade>> processOrder(String orderId, String symbol, Side side, BigDecimal price, BigDecimal quantity, OrderType orderType) {
+        CompletableFuture<List<Trade>> future = new CompletableFuture<>();
         long sequence = ringBuffer.next();
         try {
             OrderEvent event = ringBuffer.get(sequence);
-            event.set(orderId, symbol, side, price, quantity, orderType);
-            
+            event.set(orderId, symbol, side, price, quantity, orderType, future);
+        } finally {
             ringBuffer.publish(sequence);
-            
-            // Optimized spin-wait
-            while (!event.isProcessed()) {
-                Thread.onSpinWait();
-            }
-            
-            Trade[] trades = event.getTrades();
-            return trades != null ? List.of(trades).subList(0, event.getTradeCount()) : List.of();
-            
-        } catch (Exception e) {
-            ringBuffer.publish(sequence);
-            return List.of();
         }
-    }
-    
-    // Backward compatibility method
-    public List<Trade> processOrderSync(String orderId, String symbol,
-                                        Side side, BigDecimal price, BigDecimal quantity) {
-        return processOrderSync(orderId, symbol, side, price, quantity, com.phinity.common.dto.enums.OrderType.LIMIT);
+        return future;
     }
 
-    private void handleOrderEvent(OrderEvent event, long sequence, boolean endOfBatch) {
+    @Override
+    public void onEvent(OrderEvent event, long sequence, boolean endOfBatch) throws Exception {
         try {
             PendingOrders order = event.toOrder();
             List<Trade> trades = book.matchOrder(order);
-            
-            Trade[] tradeArray = trades.toArray(new Trade[0]);
-            event.setResult(tradeArray, trades.size());
-            
-            processedOrders.incrementAndGet();
-            
+            event.getFuture().complete(trades);
+            processedOrders++;
         } catch (Exception e) {
-            event.setResult(new Trade[0], 0);
+            event.getFuture().completeExceptionally(e);
         }
     }
 
@@ -94,8 +76,15 @@ public class OptimizedDisruptorEngine {
         this.book.setEventPublisher(eventPublisher);
     }
 
-    public String getSymbol() { return symbol; }
-    public long getProcessedOrdersCount() { return processedOrders.get(); }
-    public OrderBook getOrderBook() { return book; }
-    public void shutdown() { disruptor.shutdown(); }
+    public long getProcessedOrdersCount() {
+        return processedOrders;
+    }
+
+    public OrderBook getOrderBook() {
+        return book;
+    }
+
+    public void shutdown() {
+        disruptor.shutdown();
+    }
 }

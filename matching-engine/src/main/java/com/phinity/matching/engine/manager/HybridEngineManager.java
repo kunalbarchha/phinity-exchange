@@ -1,5 +1,6 @@
 package com.phinity.matching.engine.manager;
 
+import com.phinity.common.dto.enums.OrderType;
 import com.phinity.common.dto.enums.Side;
 import com.phinity.common.dto.models.PendingOrders;
 import com.phinity.matching.engine.EngineManager;
@@ -28,35 +29,39 @@ public class HybridEngineManager {
         this.disruptorEngines = new ConcurrentHashMap<>();
         this.configManager = new PairConfigurationManager();
     }
-    
+
     public void setEventPublisher(EventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
         this.standardManager.setEventPublisher(eventPublisher);
         this.disruptorEngines.values().forEach(engine -> engine.setEventPublisher(eventPublisher));
     }
 
-    public CompletableFuture<List<Trade>> processOrder(String orderId, String symbol,
-                                                       Side side, BigDecimal price, BigDecimal quantity, 
-                                                       com.phinity.common.dto.enums.OrderType orderType) {
+    public CompletableFuture<List<Trade>> processOrder(String orderId, String symbol, Side side, BigDecimal price, BigDecimal quantity, OrderType orderType) {
         long startTime = System.nanoTime();
-        
+
         if (configManager.isHighVolumePair(symbol)) {
-            // Use Disruptor for high-volume pairs
             MetricsCollector.getInstance().recordEngineUsage("disruptor");
-            OptimizedDisruptorEngine engine = disruptorEngines.computeIfAbsent(symbol, OptimizedDisruptorEngine::new);
-            List<Trade> trades = engine.processOrderSync(orderId, symbol, side, price, quantity, orderType);
-            
-            long processingTime = System.nanoTime() - startTime;
-            MetricsCollector.getInstance().recordOrderProcessed(symbol, processingTime);
-            trades.forEach(trade -> MetricsCollector.getInstance().recordTradeExecuted(symbol, trade.getQuantity()));
-            
-            return CompletableFuture.completedFuture(trades);
+            OptimizedDisruptorEngine engine = disruptorEngines.computeIfAbsent(symbol, s -> {
+                OptimizedDisruptorEngine newEngine = new OptimizedDisruptorEngine(s);
+                if (eventPublisher != null) {
+                    newEngine.setEventPublisher(eventPublisher);
+                }
+                return newEngine;
+            });
+
+            return engine.processOrder(orderId, symbol, side, price, quantity, orderType)
+                    .whenComplete((trades, ex) -> {
+                        long processingTime = System.nanoTime() - startTime;
+                        MetricsCollector.getInstance().recordOrderProcessed(symbol, processingTime);
+                        if (trades != null) {
+                            trades.forEach(trade -> MetricsCollector.getInstance().recordTradeExecuted(symbol, trade.getQuantity()));
+                        }
+                    });
         } else {
-            // Use standard engine for regular pairs
             MetricsCollector.getInstance().recordEngineUsage("standard");
             PendingOrders order = new PendingOrders(orderId, symbol, side, price, quantity);
             order.setOrderType(orderType);
-            
+
             return standardManager.processOrder(order).thenApply(trades -> {
                 long processingTime = System.nanoTime() - startTime;
                 MetricsCollector.getInstance().recordOrderProcessed(symbol, processingTime);
@@ -65,31 +70,28 @@ public class HybridEngineManager {
             });
         }
     }
-    
-    // Backward compatibility method
-    public CompletableFuture<List<Trade>> processOrder(String orderId, String symbol,
-                                                       Side side, BigDecimal price, BigDecimal quantity) {
-        return processOrder(orderId, symbol, side, price, quantity, com.phinity.common.dto.enums.OrderType.LIMIT);
+
+    public CompletableFuture<List<Trade>> processOrder(String orderId, String symbol, Side side, BigDecimal price, BigDecimal quantity) {
+        return processOrder(orderId, symbol, side, price, quantity, OrderType.LIMIT);
     }
 
     public void configureHighVolumePair(String symbol, boolean isHighVolume) {
         if (isHighVolume) {
             configManager.addHighVolumePair(symbol);
-            // Pre-create Disruptor engine
-            OptimizedDisruptorEngine engine = disruptorEngines.computeIfAbsent(symbol, OptimizedDisruptorEngine::new);
-            if (eventPublisher != null) {
-                engine.setEventPublisher(eventPublisher);
-            }
+            disruptorEngines.computeIfAbsent(symbol, s -> {
+                OptimizedDisruptorEngine newEngine = new OptimizedDisruptorEngine(s);
+                if (eventPublisher != null) {
+                    newEngine.setEventPublisher(eventPublisher);
+                }
+                return newEngine;
+            });
         } else {
             configManager.removeHighVolumePair(symbol);
-            // Shutdown and remove Disruptor engine
             OptimizedDisruptorEngine engine = disruptorEngines.remove(symbol);
             if (engine != null) {
                 engine.shutdown();
             }
         }
-        
-        // Also configure standard manager
         standardManager.configureHighVolumePair(symbol, isHighVolume);
     }
 
@@ -98,7 +100,7 @@ public class HybridEngineManager {
         allPairs.addAll(disruptorEngines.keySet());
         return allPairs;
     }
-    
+
     public OrderBook getOrderBook(String symbol) {
         if (configManager.isHighVolumePair(symbol)) {
             OptimizedDisruptorEngine engine = disruptorEngines.get(symbol);
@@ -107,26 +109,11 @@ public class HybridEngineManager {
             return standardManager.getOrderBook(symbol);
         }
     }
-    
-    /**
-     * Modifies an existing order in the order book
-     * @param orderId The ID of the order to modify
-     * @param symbol The trading pair symbol
-     * @param newPrice The new price (null to keep existing price)
-     * @param newQuantity The new quantity (null to keep existing quantity)
-     * @return The modified order if successful, null if order not found
-     */
+
     public PendingOrders modifyOrder(String orderId, String symbol, BigDecimal newPrice, BigDecimal newQuantity) {
-        if (configManager.isHighVolumePair(symbol)) {
-            OptimizedDisruptorEngine engine = disruptorEngines.get(symbol);
-            if (engine != null) {
-                return engine.getOrderBook().modifyOrder(orderId, newPrice, newQuantity);
-            }
-        } else {
-            MatchingEngine engine = standardManager.getEngine(symbol);
-            if (engine != null) {
-                return engine.modifyOrder(orderId, newPrice, newQuantity);
-            }
+        OrderBook orderBook = getOrderBook(symbol);
+        if (orderBook != null) {
+            return orderBook.modifyOrder(orderId, newPrice, newQuantity);
         }
         return null;
     }
