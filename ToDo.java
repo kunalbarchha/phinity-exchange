@@ -25,6 +25,7 @@ public class ToDo {
         18. Scan all mongo entities, and cross-check if they are being updated at respective event in the system.
         19. Support for TWAP orders for large quantities.
         20. Do session validation, user KYC, withdraw, and other status in withdrawal, and deposit.
+        21. Download Logo of all possible crypto and upload to S3 from CoinDesk public API.
      */
 
     /*
