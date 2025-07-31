@@ -32,6 +32,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="deposit-service" target="21" />
       <module name="feign-module" target="17" />
       <module name="influx-module" target="17" />
       <module name="redis-service" target="17" />
@@ -43,6 +44,7 @@
       <module name="common-modules" options="-parameters" />
       <module name="config-module" options="-parameters" />
       <module name="database-module" options="-parameters" />
+      <module name="deposit-service" options="-parameters" />
       <module name="dto-module" options="-parameters" />
       <module name="email-module" options="-parameters" />
       <module name="eureka-service" options="-parameters" />
