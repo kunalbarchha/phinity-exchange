@@ -7,10 +7,10 @@ This document lists all environment variables used across the Phinity Exchange p
 ### Security Credentials
 | Environment Variable | Description | Default Value |
 |---------------------|-------------|---------------|
-| `SPRING_MAIL_USERNAME` | SMTP username | kb9344@gmail.com |
-| `SPRING_MAIL_PASSWORD` | SMTP password | auivrdgdislfguzr |
-| `AWS_S3_KEY` | AWS S3 access key | AKIAZEXUHT6RCRYWOYH3 |
-| `AWS_S3_SECRET` | AWS S3 secret key | 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 |
+| `SPRING_MAIL_USERNAME` | SMTP username | |
+| `SPRING_MAIL_PASSWORD` | SMTP password |  |
+| `AWS_S3_KEY` | AWS S3 access key |  |
+| `AWS_S3_SECRET` | AWS S3 secret key |  |
 
 ### Database Configuration
 | Environment Variable | Description | Default Value |
@@ -33,7 +33,7 @@ This document lists all environment variables used across the Phinity Exchange p
 |---------------------|-------------|---------------|
 | `AWS_S3_BUCKET_NAME` | S3 bucket name | phinity |
 | `AWS_S3_REGION` | AWS region | eu-north-1 |
-| `AWS_S3_BUCKET_URL` | S3 bucket URL | https://phinity.s3.eu-north-1.amazonaws.com/ |
+| `AWS_S3_BUCKET_URL` | S3 bucket URL |  |
 
 ### External Service Configuration
 | Environment Variable | Description | Default Value |
@@ -93,9 +93,9 @@ This document lists all environment variables used across the Phinity Exchange p
 ### Twilio Configuration
 | Environment Variable | Description | Default Value |
 |---------------------|-------------|---------------|
-| `TWILIO_SMS_ACCOUNT_SID` | Twilio account SID | AC39f5543a5c647a4e150d990a0368d166 |
-| `TWILIO_SMS_AUTHKEY` | Twilio auth key | 0b53b84c1d508793247e00c8fa1f84ef |
-| `TWILIO_SMS_NUMBER` | Twilio phone number | 16814338655 |
+| `TWILIO_SMS_ACCOUNT_SID` | Twilio account SID |  |
+| `TWILIO_SMS_AUTHKEY` | Twilio auth key |  |
+| `TWILIO_SMS_NUMBER` | Twilio phone number |  |
 
 ## Matching Engine
 
