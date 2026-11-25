@@ -1,229 +1,90 @@
-# Phinity Exchange Matching Engine
-## Ultra-High Performance Trading System
+# Phinity Matching Engine
+
+The order matching engine behind [Phinity Exchange](README.md), built by [Cryptified Solutions](https://cryptifiedsolutions.com).
 
 ---
 
-## 🚀 Executive Summary
+## Summary
 
-**Phinity Matching Engine** delivers institutional-grade performance with **98,000+ orders/second** throughput, supporting **500+ trading pairs** simultaneously. Built for cryptocurrency exchanges demanding ultra-low latency and maximum reliability.
-
-### Key Achievements
-- ✅ **10x Performance Target**: Achieved 98K orders/sec (target: 10K)
-- ✅ **Sub-10ms Latency**: Average processing time under 5ms
-- ✅ **500+ Trading Pairs**: Concurrent support for unlimited pairs
-- ✅ **99.9% Accuracy**: Perfect price-time priority matching
-- ✅ **Thread-Safe**: Production-ready concurrent processing
+Phinity's matching engine is a plain-Java, price-time priority engine that runs one order book per trading pair. A Spring Boot service routes orders to it over Kafka. In an in-memory test it processed **50,000 orders across 497 trading pairs in 510 ms (≈98,000 orders/sec)**, with no lost or duplicated quantity.
 
 ---
 
-## 🏗️ Architecture Overview
+## How it works
 
-### Tiered Engine Design
 ```
 ┌─────────────────┐    ┌──────────────────────┐
-│  Matching       │    │   High-Volume Pool   │
-│  Service        │───▶│   (50 threads)       │
-│  (Spring Boot)  │    │   BTC/USD, ETH/USD  │
-└─────────────────┘    └──────────────────────┘
-         │              ┌──────────────────────┐
-         └─────────────▶│   Standard Pool      │
-                        │   (100 threads)      │
-                        │   All other pairs    │
-                        └──────────────────────┘
+│  Matching       │    │   High-volume pool   │
+│  Service        │───▶│   BTC/USD, ETH/USD…  │
+│  (Spring Boot)  │    └──────────────────────┘
+│  Kafka router   │    ┌──────────────────────┐
+└────────┬────────┘───▶│   Standard pool      │
+                       │   all other pairs    │
+                       └──────────────────────┘
 ```
 
-### Component Architecture
-- **Matching Service**: Spring Boot router with Kafka integration
-- **Matching Engine**: Plain Java for maximum performance
-- **Dynamic Allocation**: Admin-configurable high-volume pairs
-- **Centralized Kafka**: Unified message handling
+- **Matching Service (Spring Boot):** reads orders from Kafka, sends each to the engine for its pair, and publishes trades and order book updates.
+- **Matching Engine (plain Java):** one order book per pair, matched by price and then time.
+- **Two thread pools:** busy pairs get their own pool, so a spike on BTC/USD doesn't slow down smaller pairs.
+- **Runtime pair management:** pairs are added, removed or moved between pools from the admin panel, without a restart.
+- **Recovery:** on restart the engine reloads from a snapshot and replays events since it was taken.
+
+The current version is built on `ConcurrentSkipListMap` order books with `CompletableFuture` for concurrency.
 
 ---
 
-## 📊 Performance Benchmarks
+## Features
 
-### Throughput Tests
-| Test Scenario | Orders/Second | Latency | Success Rate |
-|---------------|---------------|---------|--------------|
-| Single Pair | 84,276 | <5ms | 100% |
-| 500+ Pairs | 98,039 | <10ms | 100% |
-| Realistic Load | 53,667 | <8ms | 100% |
-| Concurrent Stress | 67,720 | <12ms | 99.9% |
-
-### Accuracy Validation
-- ✅ **Price Priority**: Lower prices matched first
-- ✅ **Time Priority**: Earlier orders matched first  
-- ✅ **Partial Fills**: Correct quantity handling
-- ✅ **Order Conservation**: Zero quantity loss
-- ✅ **Thread Safety**: No race conditions
+- Order types: LIMIT, MARKET, STOP LOSS, TRAILING STOP LOSS
+- Time-in-force: GTC, IOC, FOK
+- Partial fills
+- Maker/taker fees
+- Per-pair metrics
+- A failure in one pair's engine doesn't stop the other pairs
 
 ---
 
-## 🎯 Key Features
+## Benchmark
 
-### Ultra-High Performance
-- **98K+ orders/second** sustained throughput
-- **Sub-millisecond** order matching
-- **Zero-copy** memory operations
-- **Lock-free** data structures where possible
+| Scenario | Orders/sec |
+|----------|-----------:|
+| Single pair | ~84,000 |
+| 497 pairs | ~98,000 |
+| Realistic mixed load | ~54,000 |
+| Concurrent stress | ~68,000 |
 
-### Scalable Architecture
-- **Dynamic pair allocation** - no hard-coded limits
-- **Tiered resource management** - high-volume pairs get priority
-- **Horizontal scaling** - add more engine instances
-- **Memory efficient** - engines created on-demand
+**Correctness checks run with the tests:**
+- Better-priced orders match first
+- At the same price, earlier orders match first
+- Partial fills leave the right quantity
+- Total quantity is conserved
+- No race conditions under concurrent load
 
-### Production Ready
-- **Thread-safe** concurrent processing
-- **Fault tolerant** - isolated engine failures
-- **Admin configurable** - runtime pair management
-- **Monitoring ready** - comprehensive metrics
+<!-- TODO: add the machine these ran on, e.g. "Measured on an 8-core / 16 GB VPS, Java 17". -->
 
-### Enterprise Integration
-- **Kafka native** - seamless message routing
-- **Spring Boot** service layer
-- **Database agnostic** - MongoDB + Redis support
-- **Cloud ready** - containerized deployment
+These figures measure the engine on its own, in memory. End-to-end throughput through the gateway, Kafka and the databases depends on the hardware and the deployment.
 
 ---
 
-## 🔧 Technical Specifications
+## Roadmap
 
-### Core Components
-```java
-// Matching Service (Spring Boot)
-- OrderRoutingService: Kafka-based order routing
-- EngineRegistryService: Dynamic pair management
-- Centralized configuration management
-
-// Matching Engine (Plain Java)  
-- EngineManager: Tiered pool coordination
-- OrderBook: Price-time priority matching
-- Thread-safe concurrent processing
-```
-
-### Performance Optimizations
-- **Current Architecture**: ConcurrentSkipListMap + CompletableFuture
-- **V2.0 Planned**: LMAX Disruptor + off-heap storage
-- **Advanced Features**: Zero-copy operations, lock-free algorithms
-- **Hardware Optimization**: CPU affinity, NUMA awareness
+- **Next:** LMAX Disruptor and off-heap order books, to reduce latency and garbage collection pauses
+- **Later:** CPU pinning and NUMA-aware deployment for dedicated hardware
 
 ---
 
-## 📈 Competitive Advantages
+## Deployment
 
-### vs Open Source Solutions (Exchange-Core)
-- **Enterprise Ready**: Production support and SLA guarantees
-- **Distributed Architecture**: Better fault tolerance and scaling
-- **Integration Ecosystem**: Spring Boot + Kafka + Database ready
-- **Customizable**: Tailored for crypto exchange requirements
-
-### vs Traditional Exchanges
-- **10x Faster**: Most exchanges handle 5-10K orders/sec
-- **Better Isolation**: Engine-per-pair prevents cross-contamination
-- **Dynamic Scaling**: Add pairs without system restart
-
-### vs Monolithic Systems
-- **Fault Isolation**: Single pair failure doesn't affect others
-- **Resource Optimization**: High-volume pairs get dedicated resources
-- **Maintenance Friendly**: Update engines independently
-
-### Performance Roadmap
-- **Current**: 98K orders/sec, 5ms latency
-- **V2.0 Target**: 500K orders/sec, <1ms latency
-- **V3.0 Vision**: 1M+ orders/sec, sub-millisecond matching
+The matching engine is latency-sensitive, so it's best on a dedicated server or VPS. The other services run fine in Docker on any cloud. They can also run side by side: the engine on dedicated hardware, the rest in the cloud.
 
 ---
 
-## 🎪 Real-World Validation
+## Working with us
 
-### Multi-Pair Distribution Test
-```
-High-Volume Pairs (60% of orders):
-├── BTC/USD: 6,000 orders [HIGH-VOLUME POOL]
-├── ETH/USD: 3,000 orders [HIGH-VOLUME POOL]
-└── Top 5 pairs: 18,000 orders total
+If you're building an exchange, brokerage or trading platform, we can:
 
-Standard Pairs (40% of orders):
-├── 490+ pairs: 12,000 orders [STANDARD POOL]
-└── Perfect load balancing achieved
-```
+- Walk you through the engine and the private code on a call
+- Run a proof of concept against your own order flow and pairs
+- Adapt the engine and the surrounding services to your requirements, then hand over the code at project handover
 
-### Stress Test Results
-- **50,000 orders** across **497 trading pairs**
-- **510ms total processing time**
-- **98,039 orders/second** sustained
-- **Zero errors** or data corruption
-
----
-
-## 💼 Business Impact
-
-### Revenue Opportunities
-- **Higher Trading Volume**: Support more simultaneous traders
-- **Premium Pairs**: Offer guaranteed low-latency for institutional clients
-- **Market Making**: Enable high-frequency trading strategies
-- **Global Expansion**: Support regional trading pairs
-
-### Operational Benefits
-- **Reduced Infrastructure**: Efficient resource utilization
-- **Lower Maintenance**: Isolated component failures
-- **Faster Deployment**: Add new pairs in minutes
-- **Better Monitoring**: Per-pair performance metrics
-
-### Risk Mitigation
-- **System Stability**: Fault-isolated architecture
-- **Data Integrity**: Thread-safe operations
-- **Regulatory Compliance**: Audit-ready trade execution
-- **Disaster Recovery**: Component-level backup/restore
-
----
-
-## 🚀 Deployment Options
-
-### Bare Metal (Recommended)
-- **Maximum Performance**: 98K+ orders/second
-- **Lowest Latency**: Sub-5ms processing
-- **Cost Effective**: No cloud overhead
-
-### Containerized (Docker/Kubernetes)
-- **Easy Scaling**: Horizontal pod scaling
-- **DevOps Friendly**: CI/CD integration
-- **Cloud Agnostic**: Deploy anywhere
-
-### Hybrid Cloud
-- **Matching Engine**: On-premises for performance
-- **Supporting Services**: Cloud for flexibility
-- **Best of Both**: Performance + scalability
-
----
-
-## 📞 Next Steps
-
-### Proof of Concept
-- **2-week implementation** of core matching engine
-- **Performance validation** with your trading data
-- **Integration testing** with existing systems
-
-### Production Deployment
-- **Phased rollout** starting with low-volume pairs
-- **Performance monitoring** and optimization
-- **Staff training** and documentation
-
-### Ongoing Support
-- **24/7 monitoring** and alerting
-- **Performance tuning** and optimization
-- **Feature enhancements** and scaling
-
----
-
-## 🏆 Why Choose Phinity Matching Engine?
-
-**Proven Performance** • **Production Ready** • **Scalable Architecture** • **Expert Support**
-
-*Contact us today to revolutionize your trading infrastructure*
-
----
-
-**Phinity Exchange Matching Engine**  
-*Where Performance Meets Precision*
+**[Contact Cryptified Solutions](https://cryptifiedsolutions.com/contact/)**, or email hello@cryptifiedsolutions.com.
